@@ -3,7 +3,7 @@
 class ScaredPoors {
     private loadedVideo: HTMLVideoElement;
     private videoFrame = 0;
-    private onanalyze: (imageData: ImageData) => any;
+    private onanalyze: (currentTime: number, imageData: ImageData) => any;
     private internalCanvas: HTMLCanvasElement;
     private internalCanvasContext: CanvasRenderingContext2D;
 
@@ -12,7 +12,7 @@ class ScaredPoors {
         this.internalCanvasContext = this.internalCanvas.getContext("2d");
     }
 
-    startAnalysis(video: HTMLVideoElement, onanalyze: (imageData: ImageData) => any) {
+    startAnalysis(video: HTMLVideoElement, onanalyze: (currentTime: number, imageData: ImageData) => any) {
         this.loadedVideo = video;
         this.onanalyze = onanalyze;
         this.internalCanvas.width = video.videoWidth;
@@ -30,7 +30,7 @@ class ScaredPoors {
             return;
 
         this.internalCanvasContext.drawImage(this.loadedVideo, 0, 0, this.loadedVideo.videoWidth, this.loadedVideo.videoHeight);
-        this.onanalyze(this.internalCanvasContext.getImageData(0, 0, this.loadedVideo.videoWidth, this.loadedVideo.videoHeight));
+        this.onanalyze(this.loadedVideo.currentTime, this..internalCanvasContext.getImageData(0, 0, this.loadedVideo.videoWidth, this.loadedVideo.videoHeight));
 
         if (this.loadedVideo)
             window.setImmediate(this.callback.bind(this));
