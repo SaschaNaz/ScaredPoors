@@ -2,7 +2,6 @@
 
 class ScaredPoors {
     private loadedVideo: HTMLVideoElement;
-    private videoFrame = 0;
     private onanalyze: (currentTime: number, imageData: ImageData) => any;
     private internalCanvas: HTMLCanvasElement;
     private internalCanvasContext: CanvasRenderingContext2D;
@@ -15,12 +14,13 @@ class ScaredPoors {
     startAnalysis(video: HTMLVideoElement, onanalyze: (currentTime: number, imageData: ImageData) => any) {
         this.loadedVideo = video;
         this.onanalyze = onanalyze;
-        this.internalCanvas.width = video.videoWidth;
-        this.internalCanvas.height = video.videoHeight;
-        this.loadedVideo.addEventListener("play", this.callback.bind(this));
+        this.loadedVideo.addEventListener("play", function () {
+            this.internalCanvas.width = video.videoWidth;
+            this.internalCanvas.height = video.videoHeight;
+            this.callback();
+        }.bind(this));
     }
     stopAnalysis() {
-        this.videoFrame = 0;
         this.loadedVideo.removeEventListener("play", this.callback.bind(this));
         this.loadedVideo = null;
     }
@@ -30,7 +30,7 @@ class ScaredPoors {
             return;
 
         this.internalCanvasContext.drawImage(this.loadedVideo, 0, 0, this.loadedVideo.videoWidth, this.loadedVideo.videoHeight);
-        this.onanalyze(this.loadedVideo.currentTime, this..internalCanvasContext.getImageData(0, 0, this.loadedVideo.videoWidth, this.loadedVideo.videoHeight));
+        this.onanalyze(this.loadedVideo.currentTime, this.internalCanvasContext.getImageData(0, 0, this.loadedVideo.videoWidth, this.loadedVideo.videoHeight));
 
         if (this.loadedVideo)
             window.setImmediate(this.callback.bind(this));

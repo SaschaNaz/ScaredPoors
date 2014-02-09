@@ -19,6 +19,8 @@
   <ItemGroup>
     <Content Include="app.css" />
     <Content Include="default.htm" />
+    <Content Include="imagediff\imagediff.js" />
+    <Content Include="imagediff\imagediff.min.js" />
     <Content Include="web.config" />
   </ItemGroup>
   <ItemGroup>

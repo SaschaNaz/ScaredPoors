@@ -1,0 +1,3 @@
+[submodule "ScaredPoors/imagediff"]
+	path = ScaredPoors/imagediff
+	url = https://github.com/HumbleSoftware/js-imagediff.git

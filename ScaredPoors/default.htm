@@ -5,6 +5,7 @@
     <meta charset="utf-8" />
     <title>TypeScript HTML App</title>
     <link rel="stylesheet" href="app.css" type="text/css" />
+    <script src="imagediff/imagediff.js"></script>
     <script src="scaredpoors.js"></script>
     <script src="app.js"></script>
 </head>
@@ -12,7 +13,9 @@
     <h1>TypeScript HTML App</h1>
 
     <div id="content">
-        <video id="target" src="html5_Video_VP8.webm" style="width: 640px; height: 480px;" controls="controls" />
+        <video id="target" src="html5_Video_VP8.webm" style="width: 640px; height: 480px;" controls="controls"></video>
+        <span id="info"></span>
+        <canvas id="clone" style="width: 640px; height: 480px;"></canvas>
     </div>
 </body>
 </html>
