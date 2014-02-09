@@ -13,16 +13,18 @@ window.addEventListener("DOMContentLoaded", () => {
         clone.width = target.videoWidth;
         clone.height = target.videoHeight;
     });
+    var worker = new Worker("worker.js");
+    worker.addEventListener("message", (e) => {
+        info.innerHTML = e.data;
+    });
     analyzer.startAnalysis(target, (currentTime, imageData) => {
         //if (canvasContext)
         //    canvasContext.putImageData(imageData, 0, 0);
         if (lastSeconds.length && lastSeconds[0] > currentTime - 1)
             return;
 
-        if (lastSeconds.length) {// not 0
-            var equality = imagediff.equal(lastImageData, imageData, 200);
-            info.innerHTML = equality + " " + currentTime;
-        }
+        if (lastSeconds.length)// not 0
+            worker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageData, data2: imageData, tolerance: 200 });
 
         lastSeconds.unshift(currentTime);
         lastImageData = imageData;

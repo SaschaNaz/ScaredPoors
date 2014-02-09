@@ -26,6 +26,7 @@
   <ItemGroup>
     <TypeScriptCompile Include="app.ts" />
     <TypeScriptCompile Include="scaredpoors.ts" />
+    <TypeScriptCompile Include="worker.ts" />
   </ItemGroup>
   <ItemGroup>
     <None Include="web.Debug.config">
