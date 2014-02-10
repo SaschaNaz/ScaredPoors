@@ -27,6 +27,10 @@ var getImageDataFromArray = function (subarray) {
     return canvasContext.getImageData(0, 0, image.naturalWidth, image.naturalHeight);
 };
 
+var loadVideo = function (file) {
+    target.src = URL.createObjectURL(event.target.files[0]);
+};
+
 var loadMJPEG = function (file) {
     canvasContext = tempCanvas.getContext("2d");
     (new MJPEGReader()).read(file, 24, function (currentTime, imageDataArray) {

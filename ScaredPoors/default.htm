@@ -14,7 +14,7 @@
     <h1>TypeScript HTML App</h1>
 
     <div id="content">
-        <label for="videoInput">Load a web video file: </label><input id="videoInput" type="file" onchange="target.src=event.target.files[0];" />
+        <label for="videoInput">Load a web video file: </label><input id="videoInput" type="file" onchange="loadVideo(event.target.files[0])" />
         <label for="mjpegInput">Load an MJPEG/AVI file: </label><input id="mjpegInput" type="file" onchange="loadMJPEG(event.target.files[0])" accept="video/x-msvideo" />
         <video id="target" style="width: 640px; height: 480px;" controls="controls"></video>
         <span id="info"></span>

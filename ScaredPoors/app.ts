@@ -31,6 +31,10 @@ var getImageDataFromArray = (subarray: Uint8Array) => {
     return canvasContext.getImageData(0, 0, image.naturalWidth, image.naturalHeight);
 }
 
+var loadVideo = (file: Blob) => {
+    target.src = URL.createObjectURL((<HTMLInputElement>event.target).files[0]);
+}
+
 var loadMJPEG = (file: Blob) => {
     canvasContext = tempCanvas.getContext("2d");
     (new MJPEGReader()).read(file, 24, (currentTime, imageDataArray) => {
