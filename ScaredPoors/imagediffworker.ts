@@ -1,4 +1,3 @@
-//importScripts("imagediff/imagediff.js");
 // ImageData Equality Operators
 function equalWidth(a, b) {
     return a.width === b.width;

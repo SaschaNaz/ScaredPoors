@@ -5,7 +5,8 @@
     <meta charset="utf-8" />
     <title>TypeScript HTML App</title>
     <link rel="stylesheet" href="app.css" type="text/css" />
-    <script src="imagediff/imagediff.js"></script>
+    <!--<script src="imagediff/imagediff.js"></script>-->
+    <script src="mjpegreader.js"></script>
     <script src="scaredpoors.js"></script>
     <script src="app.js"></script>
 </head>
@@ -13,9 +14,11 @@
     <h1>TypeScript HTML App</h1>
 
     <div id="content">
-        <video id="target" src="html5_Video_VP8.webm" style="width: 640px; height: 480px;" controls="controls"></video>
+        <label for="videoInput">Load a web video file: </label><input id="videoInput" type="file" onchange="target.src=event.target.files[0];" />
+        <label for="mjpegInput">Load an MJPEG/AVI file: </label><input id="mjpegInput" type="file" onchange="loadMJPEG(event.target.files[0])" accept="video/x-msvideo" />
+        <video id="target" style="width: 640px; height: 480px;" controls="controls"></video>
         <span id="info"></span>
-        <canvas id="clone" style="width: 640px; height: 480px;"></canvas>
+        <canvas id="tempCanvas" style="display: none;"></canvas>
     </div>
 </body>
 </html>
