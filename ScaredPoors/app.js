@@ -6,14 +6,10 @@ var canvasContext;
 
 var imageDiffWorker = new Worker("imagediffworker.js");
 imageDiffWorker.addEventListener("message", function (e) {
-    info.innerHTML = e.data;
+    if (e.data.type == "equality")
+        info.innerHTML = e.data.equality + " " + e.data.currentTime;
 });
 window.addEventListener("DOMContentLoaded", function () {
-    target.addEventListener("play", function () {
-        canvasContext = tempCanvas.getContext("2d");
-        tempCanvas.width = target.videoWidth;
-        tempCanvas.height = target.videoHeight;
-    });
     analyzer.startAnalysis(target, postOperation);
 });
 
@@ -31,12 +27,39 @@ var loadVideo = function (file) {
     target.src = URL.createObjectURL(event.target.files[0]);
 };
 
+var mjpegWorker = new Worker("mjpegworker.js");
+mjpegWorker.addEventListener("message", function (e) {
+    var data = e.data;
+    var arraybuffer = data.arraybuffer;
+    var array = new Uint8Array(arraybuffer);
+    var frameDataList = data.frameDataList;
+    var sendFrame = function () {
+        sendingIndex += data.frameRate;
+        if (frameDataList.length <= sendingIndex)
+            return;
+        var sendingFrame = frameDataList[sendingIndex];
+        postOperation(sendingFrame.currentTime, getImageDataFromArray(array.subarray(sendingFrame.jpegStartIndex, sendingFrame.jpegFinishIndex)));
+    };
+
+    var sendingIndex = -data.frameRate;
+    imageDiffWorker.addEventListener("message", function (eq) {
+        if (eq.data.type == "equality") {
+            sendFrame();
+        }
+    });
+    sendFrame();
+    sendFrame(); //send two frames
+});
+
 var loadMJPEG = function (file) {
     canvasContext = tempCanvas.getContext("2d");
-    (new MJPEGReader()).read(file, 24, function (currentTime, imageDataArray) {
-        postOperation(currentTime, getImageDataFromArray(imageDataArray));
-    });
-    //mjpegWorker.postMessage({ type: "mjpeg", file: file, frameRate: 24 });
+
+    //(new MJPEGReader()).read(file, 24, (frames) => {
+    //    frames.forEach((frame) => {
+    //        postOperation(frame.currentTime, getImageDataFromArray(frame.jpegBase64));
+    //    });
+    //});
+    mjpegWorker.postMessage({ type: "mjpeg", file: file, frameRate: 100 });
 };
 
 var postOperation = function (currentTime, imageData) {

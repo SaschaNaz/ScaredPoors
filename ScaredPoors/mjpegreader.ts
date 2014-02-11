@@ -1,11 +1,22 @@
+interface MJPEGFrameData {
+    currentTime: number;
+    jpegStartIndex: number;
+    jpegFinishIndex: number;
+}
+interface MJPEGData {
+    frameRate: number;
+    arraybuffer: ArrayBuffer;
+    frameDataList: MJPEGFrameData[];
+}
 class MJPEGReader {
-    read(file: Blob, frameRate: number, onframeread: (currentTime: number, imageDataArray: Uint8Array) => any) {
+    read(file: Blob, frameRate: number, onframeread: (loadedData: MJPEGData) => any) {
         var reader = new FileReader();
         reader.onload = (e) => {
             var arraybuffer: ArrayBuffer = e.target.result;
             var array = new Uint8Array(arraybuffer);
             var nextIndex = 0;
             var currentFrame = -1;
+            var frames: MJPEGFrameData[] = [];
             while (true) {
                 var startIndex = this.findStartIndex(array, nextIndex);
                 if (startIndex == -1)
@@ -17,8 +28,9 @@ class MJPEGReader {
                 currentFrame++;
                 nextIndex = finishIndex;
 
-                onframeread(currentFrame / frameRate, array.subarray(startIndex, finishIndex)); 
+                frames.push({ currentTime: currentFrame / frameRate, jpegStartIndex: startIndex, jpegFinishIndex: finishIndex });
             }
+            onframeread({ frameRate: frameRate, arraybuffer: arraybuffer, frameDataList: frames }); 
         }
         reader.readAsArrayBuffer(file);
     }

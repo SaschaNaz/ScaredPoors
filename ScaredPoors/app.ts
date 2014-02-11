@@ -9,15 +9,11 @@ var freezes = [];
 var canvasContext: CanvasRenderingContext2D;
 
 var imageDiffWorker = new Worker("imagediffworker.js");
-imageDiffWorker.addEventListener("message", (e) => {
-    info.innerHTML = e.data;
+imageDiffWorker.addEventListener("message", (e: MessageEvent) => {
+    if (e.data.type == "equality")
+        info.innerHTML = e.data.equality + " " + e.data.currentTime;
 });
 window.addEventListener("DOMContentLoaded", () => {
-    target.addEventListener("play", () => {
-        canvasContext = tempCanvas.getContext("2d");
-        tempCanvas.width = target.videoWidth;
-        tempCanvas.height = target.videoHeight;
-    });
     analyzer.startAnalysis(target, postOperation);
 });
 
@@ -29,19 +25,47 @@ var getImageDataFromArray = (subarray: Uint8Array) => {
     tempCanvas.height = image.naturalHeight;
     canvasContext.drawImage(image, 0, 0);
     return canvasContext.getImageData(0, 0, image.naturalWidth, image.naturalHeight);
-}
+};
+
 
 var loadVideo = (file: Blob) => {
     target.src = URL.createObjectURL((<HTMLInputElement>event.target).files[0]);
-}
+};
+
+var mjpegWorker = new Worker("mjpegworker.js");
+mjpegWorker.addEventListener("message", (e: MessageEvent) => {
+    var data: MJPEGData = e.data;
+    var arraybuffer = data.arraybuffer;
+    var array = new Uint8Array(arraybuffer);
+    var frameDataList = data.frameDataList;
+    var sendFrame = () => {
+        sendingIndex += data.frameRate;
+        if (frameDataList.length <= sendingIndex)
+            return;
+        var sendingFrame = frameDataList[sendingIndex];
+        postOperation(sendingFrame.currentTime, getImageDataFromArray(array.subarray(sendingFrame.jpegStartIndex, sendingFrame.jpegFinishIndex)));
+    };
+
+    var sendingIndex = -data.frameRate;
+    imageDiffWorker.addEventListener("message", (eq: MessageEvent) => {
+        if (eq.data.type == "equality") {
+            sendFrame();
+        }
+    });
+    sendFrame();
+    sendFrame();//send two frames
+});
+
 
 var loadMJPEG = (file: Blob) => {
     canvasContext = tempCanvas.getContext("2d");
-    (new MJPEGReader()).read(file, 24, (currentTime, imageDataArray) => {
-        postOperation(currentTime, getImageDataFromArray(imageDataArray));
-    });
-    //mjpegWorker.postMessage({ type: "mjpeg", file: file, frameRate: 24 });
-}
+    //(new MJPEGReader()).read(file, 24, (frames) => {
+    //    frames.forEach((frame) => {
+    //        postOperation(frame.currentTime, getImageDataFromArray(frame.jpegBase64));
+    //    });
+    //});
+    mjpegWorker.postMessage({ type: "mjpeg", file: file, frameRate: 100 });
+};
 
 var postOperation = (currentTime: number, imageData: ImageData) => {
     if (lastSeconds.length && lastSeconds[0] > currentTime - 1)
@@ -52,5 +76,4 @@ var postOperation = (currentTime: number, imageData: ImageData) => {
 
     lastSeconds.unshift(currentTime);
     lastImageData = imageData;
-
 };

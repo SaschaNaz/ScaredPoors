@@ -24,7 +24,7 @@ function equal(a, b, tolerance) {
 addEventListener('message', function (e) {
     if (e.data.type === "equal") {
         var equality = equal(e.data.data1, e.data.data2, e.data.tolerance);
-        postMessage((equality + " " + e.data.currentTime), null);
+        postMessage({ type: "equality", equality: equality, currentTime: e.data.currentTime }, null);
     }
 });
 //# sourceMappingURL=imagediffworker.js.map

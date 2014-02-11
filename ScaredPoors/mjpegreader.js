@@ -9,6 +9,7 @@ var MJPEGReader = (function () {
             var array = new Uint8Array(arraybuffer);
             var nextIndex = 0;
             var currentFrame = -1;
+            var frames = [];
             while (true) {
                 var startIndex = _this.findStartIndex(array, nextIndex);
                 if (startIndex == -1)
@@ -20,8 +21,9 @@ var MJPEGReader = (function () {
                 currentFrame++;
                 nextIndex = finishIndex;
 
-                onframeread(currentFrame / frameRate, array.subarray(startIndex, finishIndex));
+                frames.push({ currentTime: currentFrame / frameRate, jpegStartIndex: startIndex, jpegFinishIndex: finishIndex });
             }
+            onframeread({ frameRate: frameRate, arraybuffer: arraybuffer, frameDataList: frames });
         };
         reader.readAsArrayBuffer(file);
     };
