@@ -7,6 +7,7 @@ var lastSeconds = [];
 var lastImageData: ImageData;
 var freezes = [];
 var canvasContext: CanvasRenderingContext2D;
+var loadedArrayBuffer: ArrayBuffer;
 
 var imageDiffWorker = new Worker("imagediffworker.js");
 imageDiffWorker.addEventListener("message", (e: MessageEvent) => {
@@ -29,14 +30,13 @@ var getImageDataFromArray = (subarray: Uint8Array) => {
 
 
 var loadVideo = (file: Blob) => {
-    target.src = URL.createObjectURL((<HTMLInputElement>event.target).files[0]);
+    target.src = URL.createObjectURL(file);
 };
 
 var mjpegWorker = new Worker("mjpegworker.js");
 mjpegWorker.addEventListener("message", (e: MessageEvent) => {
     var data: MJPEGData = e.data;
-    var arraybuffer = data.arraybuffer;
-    var array = new Uint8Array(arraybuffer);
+    var array = new Uint8Array(loadedArrayBuffer);
     var frameDataList = data.frameDataList;
     var sendFrame = () => {
         sendingIndex += data.frameRate;
@@ -58,13 +58,19 @@ mjpegWorker.addEventListener("message", (e: MessageEvent) => {
 
 
 var loadMJPEG = (file: Blob) => {
-    canvasContext = tempCanvas.getContext("2d");
-    //(new MJPEGReader()).read(file, 24, (frames) => {
-    //    frames.forEach((frame) => {
-    //        postOperation(frame.currentTime, getImageDataFromArray(frame.jpegBase64));
-    //    });
-    //});
-    mjpegWorker.postMessage({ type: "mjpeg", file: file, frameRate: 100 });
+    var reader = new FileReader();
+    reader.onload = (e) => {
+        loadedArrayBuffer = <ArrayBuffer>e.target.result;
+
+        canvasContext = tempCanvas.getContext("2d");
+        //(new MJPEGReader()).read(file, 24, (frames) => {
+        //    frames.forEach((frame) => {
+        //        postOperation(frame.currentTime, getImageDataFromArray(frame.jpegBase64));
+        //    });
+        //});
+        mjpegWorker.postMessage({ type: "mjpeg", file: file, frameRate: 100 });
+    };
+    reader.readAsArrayBuffer(file);
 };
 
 var postOperation = (currentTime: number, imageData: ImageData) => {

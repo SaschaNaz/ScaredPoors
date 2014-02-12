@@ -23,7 +23,7 @@ var MJPEGReader = (function () {
 
                 frames.push({ currentTime: currentFrame / frameRate, jpegStartIndex: startIndex, jpegFinishIndex: finishIndex });
             }
-            onframeread({ frameRate: frameRate, arraybuffer: arraybuffer, frameDataList: frames });
+            onframeread({ frameRate: frameRate, frameDataList: frames });
         };
         reader.readAsArrayBuffer(file);
     };

@@ -3,6 +3,7 @@ var lastSeconds = [];
 var lastImageData;
 var freezes = [];
 var canvasContext;
+var loadedArrayBuffer;
 
 var imageDiffWorker = new Worker("imagediffworker.js");
 imageDiffWorker.addEventListener("message", function (e) {
@@ -24,14 +25,13 @@ var getImageDataFromArray = function (subarray) {
 };
 
 var loadVideo = function (file) {
-    target.src = URL.createObjectURL(event.target.files[0]);
+    target.src = URL.createObjectURL(file);
 };
 
 var mjpegWorker = new Worker("mjpegworker.js");
 mjpegWorker.addEventListener("message", function (e) {
     var data = e.data;
-    var arraybuffer = data.arraybuffer;
-    var array = new Uint8Array(arraybuffer);
+    var array = new Uint8Array(loadedArrayBuffer);
     var frameDataList = data.frameDataList;
     var sendFrame = function () {
         sendingIndex += data.frameRate;
@@ -52,14 +52,20 @@ mjpegWorker.addEventListener("message", function (e) {
 });
 
 var loadMJPEG = function (file) {
-    canvasContext = tempCanvas.getContext("2d");
+    var reader = new FileReader();
+    reader.onload = function (e) {
+        loadedArrayBuffer = e.target.result;
 
-    //(new MJPEGReader()).read(file, 24, (frames) => {
-    //    frames.forEach((frame) => {
-    //        postOperation(frame.currentTime, getImageDataFromArray(frame.jpegBase64));
-    //    });
-    //});
-    mjpegWorker.postMessage({ type: "mjpeg", file: file, frameRate: 100 });
+        canvasContext = tempCanvas.getContext("2d");
+
+        //(new MJPEGReader()).read(file, 24, (frames) => {
+        //    frames.forEach((frame) => {
+        //        postOperation(frame.currentTime, getImageDataFromArray(frame.jpegBase64));
+        //    });
+        //});
+        mjpegWorker.postMessage({ type: "mjpeg", file: file, frameRate: 100 });
+    };
+    reader.readAsArrayBuffer(file);
 };
 
 var postOperation = function (currentTime, imageData) {
