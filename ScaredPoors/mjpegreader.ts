@@ -1,17 +1,18 @@
 interface MJPEGFrameData {
     currentTime: number;
-    jpegStartIndex: number;
-    jpegFinishIndex: number;
+    jpegArrayData: Uint8Array;
+    //jpegStartIndex: number;
+    //jpegFinishIndex: number;
 }
 interface MJPEGData {
     frameRate: number;
     frameDataList: MJPEGFrameData[];
 }
 class MJPEGReader {
-    read(arraybuffer: ArrayBuffer, frameRate: number, onframeread: (loadedData: MJPEGData) => any) {
-        //var reader = new FileReader();
-        //reader.onload = (e) => {
-            //var arraybuffer: ArrayBuffer = e.target.result;
+    read(file: File, frameRate: number, onframeread: (loadedData: MJPEGData) => any) {
+        var reader = new FileReader();
+        reader.onload = (e) => {
+            var arraybuffer: ArrayBuffer = e.target.result;
             var array = new Uint8Array(arraybuffer);
             var nextIndex = 0;
             var currentFrame = -1;
@@ -27,11 +28,11 @@ class MJPEGReader {
                 currentFrame++;
                 nextIndex = finishIndex;
 
-                frames.push({ currentTime: currentFrame / frameRate, jpegStartIndex: startIndex, jpegFinishIndex: finishIndex });
+                frames.push({ currentTime: currentFrame / frameRate, jpegArrayData: array.subarray(startIndex, finishIndex) });
             }
             onframeread({ frameRate: frameRate, frameDataList: frames }); 
-        //}
-        //reader.readAsArrayBuffer(file);
+        }
+        reader.readAsArrayBuffer(file);
     }
 
     private findStartIndex(array: Uint8Array, index: number) {
