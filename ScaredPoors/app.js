@@ -69,7 +69,7 @@ var loadMJPEG = function (file) {
         //        postOperation(frame.currentTime, getImageDataFromArray(frame.jpegBase64));
         //    });
         //});
-        mjpegWorker.postMessage({ type: "mjpeg", file: file, frameRate: 100 });
+        mjpegWorker.postMessage({ type: "mjpeg", arraybuffer: loadedArrayBuffer, frameRate: 100 });
     };
     reader.readAsArrayBuffer(file);
 };

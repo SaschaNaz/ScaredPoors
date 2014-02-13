@@ -1,31 +1,30 @@
 var MJPEGReader = (function () {
     function MJPEGReader() {
     }
-    MJPEGReader.prototype.read = function (file, frameRate, onframeread) {
-        var _this = this;
-        var reader = new FileReader();
-        reader.onload = function (e) {
-            var arraybuffer = e.target.result;
-            var array = new Uint8Array(arraybuffer);
-            var nextIndex = 0;
-            var currentFrame = -1;
-            var frames = [];
-            while (true) {
-                var startIndex = _this.findStartIndex(array, nextIndex);
-                if (startIndex == -1)
-                    break;
-                var finishIndex = _this.findFinishIndex(array, startIndex);
-                if (finishIndex == -1)
-                    throw new Error("Parser could not finish its operation: frame bound not found");
+    MJPEGReader.prototype.read = function (arraybuffer, frameRate, onframeread) {
+        //var reader = new FileReader();
+        //reader.onload = (e) => {
+        //var arraybuffer: ArrayBuffer = e.target.result;
+        var array = new Uint8Array(arraybuffer);
+        var nextIndex = 0;
+        var currentFrame = -1;
+        var frames = [];
+        while (true) {
+            var startIndex = this.findStartIndex(array, nextIndex);
+            if (startIndex == -1)
+                break;
+            var finishIndex = this.findFinishIndex(array, startIndex);
+            if (finishIndex == -1)
+                throw new Error("Parser could not finish its operation: frame bound not found");
 
-                currentFrame++;
-                nextIndex = finishIndex;
+            currentFrame++;
+            nextIndex = finishIndex;
 
-                frames.push({ currentTime: currentFrame / frameRate, jpegStartIndex: startIndex, jpegFinishIndex: finishIndex });
-            }
-            onframeread({ frameRate: frameRate, frameDataList: frames });
-        };
-        reader.readAsArrayBuffer(file);
+            frames.push({ currentTime: currentFrame / frameRate, jpegStartIndex: startIndex, jpegFinishIndex: finishIndex });
+        }
+        onframeread({ frameRate: frameRate, frameDataList: frames });
+        //}
+        //reader.readAsArrayBuffer(file);
     };
 
     MJPEGReader.prototype.findStartIndex = function (array, index) {

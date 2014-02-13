@@ -8,10 +8,10 @@ interface MJPEGData {
     frameDataList: MJPEGFrameData[];
 }
 class MJPEGReader {
-    read(file: Blob, frameRate: number, onframeread: (loadedData: MJPEGData) => any) {
-        var reader = new FileReader();
-        reader.onload = (e) => {
-            var arraybuffer: ArrayBuffer = e.target.result;
+    read(arraybuffer: ArrayBuffer, frameRate: number, onframeread: (loadedData: MJPEGData) => any) {
+        //var reader = new FileReader();
+        //reader.onload = (e) => {
+            //var arraybuffer: ArrayBuffer = e.target.result;
             var array = new Uint8Array(arraybuffer);
             var nextIndex = 0;
             var currentFrame = -1;
@@ -30,8 +30,8 @@ class MJPEGReader {
                 frames.push({ currentTime: currentFrame / frameRate, jpegStartIndex: startIndex, jpegFinishIndex: finishIndex });
             }
             onframeread({ frameRate: frameRate, frameDataList: frames }); 
-        }
-        reader.readAsArrayBuffer(file);
+        //}
+        //reader.readAsArrayBuffer(file);
     }
 
     private findStartIndex(array: Uint8Array, index: number) {
