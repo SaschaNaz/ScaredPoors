@@ -3,7 +3,7 @@ importScripts("mjpegreader.js");
 addEventListener('message', function (e) {
     if (e.data.type === "mjpeg") {
         (new MJPEGReader()).read(e.data.file, e.data.frameRate, function (mjpegData) {
-            postMessage(mjpegData, null);
+            postMessage({ mjpegData: mjpegData }, null);
             delete mjpegData;
         });
     }

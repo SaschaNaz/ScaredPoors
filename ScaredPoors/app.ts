@@ -1,13 +1,21 @@
+class MemoryBox {
+    canvas = document.createElement("canvas");
+    canvasContext: CanvasRenderingContext2D;
+    image = document.createElement("img");
+    constructor() {
+        this.canvasContext = this.canvas.getContext("2d");
+    }
+}
+
 declare var target: HTMLVideoElement;
 declare var info: HTMLSpanElement;
-declare var tempCanvas: HTMLCanvasElement;
 declare var imagediff: any;
 var analyzer = new ScaredPoors();
 var lastSeconds = [];
 var lastImageData: ImageData;
 var freezes = [];
-var canvasContext: CanvasRenderingContext2D;
 var loadedArrayBuffer: ArrayBuffer;
+var memoryBox = new MemoryBox();
 
 var imageDiffWorker = new Worker("imagediffworker.js");
 imageDiffWorker.addEventListener("message", (e: MessageEvent) => {
@@ -15,17 +23,17 @@ imageDiffWorker.addEventListener("message", (e: MessageEvent) => {
         info.innerHTML = e.data.equality + " " + e.data.currentTime;
 });
 window.addEventListener("DOMContentLoaded", () => {
+
     analyzer.startAnalysis(target, postOperation);
 });
 
 var getImageDataFromArray = (subarray: Uint8Array) => {
     var dataURI = "data:image/jpeg;base64," + btoa(String.fromCharCode.apply(null, subarray));
-    var image = document.createElement("img");
-    image.src = dataURI;
-    tempCanvas.width = image.naturalWidth;
-    tempCanvas.height = image.naturalHeight;
-    canvasContext.drawImage(image, 0, 0);
-    return canvasContext.getImageData(0, 0, image.naturalWidth, image.naturalHeight);
+    memoryBox.image.src = dataURI;
+    memoryBox.canvas.width = memoryBox.image.naturalWidth;
+    memoryBox.canvas.height = memoryBox.image.naturalHeight;
+    memoryBox.canvasContext.drawImage(memoryBox.image, 0, 0);
+    return memoryBox.canvasContext.getImageData(0, 0, memoryBox.image.naturalWidth, memoryBox.image.naturalHeight);
 };
 
 
@@ -35,7 +43,7 @@ var loadVideo = (file: Blob) => {
 
 var mjpegWorker = new Worker("mjpegworker.js");
 mjpegWorker.addEventListener("message", (e: MessageEvent) => {
-    var data: MJPEGData = e.data;
+    var data: MJPEGData = e.data.mjpegData;
     var array = new Uint8Array(loadedArrayBuffer);
     var frameDataList = data.frameDataList;
     var sendFrame = () => {
@@ -61,8 +69,6 @@ var loadMJPEG = (file: Blob) => {
     var reader = new FileReader();
     reader.onload = (e) => {
         loadedArrayBuffer = <ArrayBuffer>e.target.result;
-
-        canvasContext = tempCanvas.getContext("2d");
         //(new MJPEGReader()).read(file, 24, (frames) => {
         //    frames.forEach((frame) => {
         //        postOperation(frame.currentTime, getImageDataFromArray(frame.jpegBase64));
