@@ -31,6 +31,7 @@ class MJPEGReader {
                 frames.push({ currentTime: currentFrame / frameRate, jpegArrayData: array.subarray(startIndex, finishIndex) });
             }
             onframeread({ frameRate: frameRate, frameDataList: frames }); 
+            delete arraybuffer;
         }
         reader.readAsArrayBuffer(file);
     }
