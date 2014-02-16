@@ -1,15 +1,5 @@
 "use strict";
 
-interface MJPEGFrameData {
-    currentTime: number;
-    jpegArrayData: Uint8Array;
-    //jpegStartIndex: number;
-    //jpegFinishIndex: number;
-}
-interface MJPEGData {//to be obsolete
-    frameRate: number;
-    frameDataList: MJPEGFrameData[];
-}
 interface TypedData {
     name: string;
     data: Uint8Array;
@@ -82,7 +72,14 @@ class MJPEGReader {
             var arraybuffer: ArrayBuffer = e.target.result;
             var array = new Uint8Array(arraybuffer);
 
-            this._readRiff(array);
+            var aviMJPEG = this._readRiff(array);
+            var mjpeg = new MJPEG();
+            mjpeg.frameInterval = aviMJPEG.mainHeader.frameIntervalMicroseconds / 1e6;
+            mjpeg.totalFrames = aviMJPEG.mainHeader.totalFrames;
+            mjpeg.width = aviMJPEG.mainHeader.width;
+            mjpeg.height = aviMJPEG.mainHeader.height;
+            mjpeg.frames = aviMJPEG.JPEGs;
+            onread(mjpeg);
         }
         reader.readAsArrayBuffer(file);
     }
@@ -97,6 +94,7 @@ class MJPEGReader {
         var indexes = this._readAVIIndex(targetDataArray);
         var exportedJPEG = this._exportJPEG(moviList.dataArray, indexes);
 
+        return { mainHeader: hdrlList.mainHeader, JPEGs: exportedJPEG };
     }
 
     private static _readHdrl(array: Uint8Array) {
@@ -211,9 +209,19 @@ class MJPEG {
     }
     width: number;
     height: number;
-    private frames: MJPEGFrameData[];
+    frames: Uint8Array[];
 
     getFrame(index: number) {
+        var i = index;
+        while (i >= 0) {
+            if (this.frames[i])
+                return this.frames[i];
+            else
+                i--;
+        }
+        return;
+    }
+    getFrameByTime(time: number) {
 
     }
 }

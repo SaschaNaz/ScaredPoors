@@ -55,7 +55,14 @@ var MJPEGReader = (function () {
             var arraybuffer = e.target.result;
             var array = new Uint8Array(arraybuffer);
 
-            _this._readRiff(array);
+            var aviMJPEG = _this._readRiff(array);
+            var mjpeg = new MJPEG();
+            mjpeg.frameInterval = aviMJPEG.mainHeader.frameIntervalMicroseconds / 1e6;
+            mjpeg.totalFrames = aviMJPEG.mainHeader.totalFrames;
+            mjpeg.width = aviMJPEG.mainHeader.width;
+            mjpeg.height = aviMJPEG.mainHeader.height;
+            mjpeg.frames = aviMJPEG.JPEGs;
+            onread(mjpeg);
         };
         reader.readAsArrayBuffer(file);
     };
@@ -69,6 +76,8 @@ var MJPEGReader = (function () {
         targetDataArray = array.subarray(moviList.dataArray.byteOffset + moviList.dataArray.byteLength); //JUNK safe subarray
         var indexes = this._readAVIIndex(targetDataArray);
         var exportedJPEG = this._exportJPEG(moviList.dataArray, indexes);
+
+        return { mainHeader: hdrlList.mainHeader, JPEGs: exportedJPEG };
     };
 
     MJPEGReader._readHdrl = function (array) {
@@ -190,6 +199,16 @@ var MJPEG = (function () {
     });
 
     MJPEG.prototype.getFrame = function (index) {
+        var i = index;
+        while (i >= 0) {
+            if (this.frames[i])
+                return this.frames[i];
+            else
+                i--;
+        }
+        return;
+    };
+    MJPEG.prototype.getFrameByTime = function (time) {
     };
     return MJPEG;
 })();
