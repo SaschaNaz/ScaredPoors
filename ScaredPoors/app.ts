@@ -41,42 +41,43 @@ var loadVideo = (file: Blob) => {
     target.src = URL.createObjectURL(file);
 };
 
-var mjpegWorker = new Worker("mjpegworker.js");
-mjpegWorker.addEventListener("message", (e: MessageEvent) => {
-    var data: MJPEGData = e.data.mjpegData;
-    //var array = new Uint8Array(loadedArrayBuffer);
-    var frameDataList = data.frameDataList;
-    var sendFrame = () => {
-        sendingIndex += data.frameRate;
-        if (frameDataList.length <= sendingIndex)
-            return;
-        var sendingFrame = frameDataList[sendingIndex];
-        postOperation(sendingFrame.currentTime, getImageDataFromArray(sendingFrame.jpegArrayData));
-    };
+//var mjpegWorker = new Worker("mjpegworker.js");
+//mjpegWorker.addEventListener("message", (e: MessageEvent) => {
+//    var data: MJPEGData = e.data.mjpegData;
+//    //var array = new Uint8Array(loadedArrayBuffer);
+//    var frameDataList = data.frameDataList;
+//    var sendFrame = () => {
+//        sendingIndex += data.frameRate;
+//        if (frameDataList.length <= sendingIndex)
+//            return;
+//        var sendingFrame = frameDataList[sendingIndex];
+//        postOperation(sendingFrame.currentTime, getImageDataFromArray(sendingFrame.jpegArrayData));
+//    };
 
-    var sendingIndex = -data.frameRate;
-    imageDiffWorker.addEventListener("message", (eq: MessageEvent) => {
-        if (eq.data.type == "equality") {
-            sendFrame();
-        }
-    });
-    sendFrame();
-    sendFrame();//send two frames
-});
+//    var sendingIndex = -data.frameRate;
+//    imageDiffWorker.addEventListener("message", (eq: MessageEvent) => {
+//        if (eq.data.type == "equality") {
+//            sendFrame();
+//        }
+//    });
+//    sendFrame();
+//    sendFrame();//send two frames
+//});
 
 
 var loadMJPEG = (file: Blob) => {
     //var reader = new FileReader();
     //reader.onload = (e) => {
     //    loadedArrayBuffer = <ArrayBuffer>e.target.result;
-        //(new MJPEGReader()).read(file, 24, (frames) => {
-        //    frames.forEach((frame) => {
-        //        postOperation(frame.currentTime, getImageDataFromArray(frame.jpegBase64));
-        //    });
-        //});
-        mjpegWorker.postMessage({ type: "mjpeg", file: file /*arraybuffer: loadedArrayBuffer*/, frameRate: 100 });
+    //(new MJPEGReader()).read(file, 24, (frames) => {
+    //    frames.forEach((frame) => {
+    //        postOperation(frame.currentTime, getImageDataFromArray(frame.jpegBase64));
+    //    });
+    //});
+    //mjpegWorker.postMessage({ type: "mjpeg", file: file /*arraybuffer: loadedArrayBuffer*/, frameRate: 100 });
     //};
     //reader.readAsArrayBuffer(file);
+    MJPEGReader.read(file, (mjpeg) => { });
 };
 
 var postOperation = (currentTime: number, imageData: ImageData) => {
