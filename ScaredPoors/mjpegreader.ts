@@ -11,7 +11,7 @@ interface MJPEGData {//to be obsolete
     frameDataList: MJPEGFrameData[];
 }
 interface TypedData {
-    type: string;
+    name: string;
     data: Uint8Array;
 }
 interface AVIMainHeader {
@@ -19,6 +19,10 @@ interface AVIMainHeader {
     totalFrames: number;
     width: number;
     height: number;
+}
+interface AVIOldIndex {
+    byteOffset: number;
+    byteLength: number;
 }
 class MJPEGReader {
     //read(file: File, frameRate: number, onframeread: (loadedData: MJPEGData) => any) {
@@ -84,26 +88,28 @@ class MJPEGReader {
     }
 
     private static _readRiff(array: Uint8Array) {
-        var riff = this._getTypedData(array, "RIFF");
-        if (riff.type !== "AVI ")
-            throw new Error("Incorrect Format");
-        var hdrlList = this._readHdrl(riff.data);
-        var moviList = this._readMovi(riff.data.subarray(12 + hdrlList.dataLength));
+        var riff = this._getTypedData(array, "RIFF", "AVI ");
+        var targetDataArray = riff;
+        var hdrlList = this._readHdrl(targetDataArray);
+        targetDataArray = array.subarray(hdrlList.dataArray.byteOffset + hdrlList.dataArray.byteLength);
+        var moviList = this._readMovi(targetDataArray);
+        targetDataArray = array.subarray(moviList.dataArray.byteOffset + moviList.dataArray.byteLength);//JUNK safe subarray
+        var indexes = this._readAVIIndex(targetDataArray);
+        var exportedJPEG = this._exportJPEG(moviList.dataArray, indexes);
+
     }
 
     private static _readHdrl(array: Uint8Array) {
-        var hdrlList = this._getTypedData(array, "LIST");
-        if (hdrlList.type !== "hdrl")
-            throw new Error("Incorrect Format");
+        var hdrlList = this._getTypedData(array, "LIST", "hdrl");
 
-        var mainHeader = this._readAVIMainHeader(hdrlList.data);
-        return { dataLength: hdrlList.data.byteLength, mainHeader: mainHeader }
+        var mainHeader = this._readAVIMainHeader(hdrlList);
+        return { dataArray: hdrlList, mainHeader: mainHeader }
     }
 
     private static _readAVIMainHeader(array: Uint8Array) {
-        if (this._getFourCC(array, 0) !== "avih")
-            throw new Error("Incorrect Format");
-        var headerArray = array.subarray(8, 8 + this._getLittleEndianedDword(array, 4))
+        //if (this._getFourCC(array, 0) !== "avih")
+        //    throw new Error("Incorrect Format");
+        var headerArray = this._getNonTypedData(array, "avih");//array.subarray(8, 8 + this._getLittleEndianedDword(array, 4))
 
         return <AVIMainHeader>{
             frameIntervalMicroseconds: this._getLittleEndianedDword(headerArray, 0),
@@ -114,25 +120,57 @@ class MJPEGReader {
     }
 
     private static _readMovi(array: Uint8Array) {
-        var moviList = this._getTypedData(array, "LIST");
-        if (moviList.type !== "movi")
-            throw new Error("Incorrect Format");
-
+        var moviList = this._getTypedData(array, "LIST", "movi");
+        return { dataArray: moviList };
     }
 
-    private static _getTypedData(array: Uint8Array, structureName: string) {
-        var name = this._getFourCC(array, 0);
-        if (name === structureName)
-            return <TypedData>{
-                type: this._getFourCC(array, 8),
-                data: array.subarray(12, 8 + this._getLittleEndianedDword(array, 4))
-            };
-        else if (name === "JUNK") {
+    private static _readAVIIndex(array: Uint8Array) {
+        var indexData = this._getNonTypedData(array, "idx1");
+        var indexes: AVIOldIndex[] = [];
+        for (var i = 0; i < indexData.byteLength / 16; i += 1) {
+            var offset = this._getLittleEndianedDword(indexData, i * 16 + 8);
+            var length = this._getLittleEndianedDword(indexData, i * 16 + 12);
+            if (length > 0)
+                indexes[i] = { byteOffset: offset - 4, byteLength: length };//ignoring 'movi' string
+        }
+        return indexes;
+    }
+
+    private static _exportJPEG(moviList: Uint8Array, indexes: AVIOldIndex[]) {
+        var JPEGs: Uint8Array[] = [];
+        for (var i = 0; i < indexes.length; i++) {
+            if (indexes[i])
+                JPEGs[i] = moviList.subarray(indexes[i].byteOffset + 8, indexes[i].byteOffset + 8 + indexes[i].byteLength);
+        }
+        return JPEGs;
+    }
+
+    private static _getTypedData(array: Uint8Array, structureType: string, dataName: string): Uint8Array {
+        var type = this._getFourCC(array, 0);
+        if (type === structureType) {
+            var name = this._getFourCC(array, 8);
+            if (name === dataName)
+                return array.subarray(12, 8 + this._getLittleEndianedDword(array, 4));
+            else 
+                throw new Error("Different data name is detected.");
+        }
+        else if (type === "JUNK") {
             var junkLength = 8 + this._getLittleEndianedDword(array, 4);
-            return this._getTypedData(array.subarray(junkLength), structureName);
+            return this._getTypedData(array.subarray(junkLength), structureType, dataName);
         }
         else
             throw new Error("Incorrect Format");
+    }
+    private static _getNonTypedData(array: Uint8Array, dataName: string): Uint8Array {
+        var name = this._getFourCC(array, 0);
+        if (name == dataName)
+            return array.subarray(8, 4 + this._getLittleEndianedDword(array, 4));
+        else if (name === "JUNK") {
+            var junkLength = 8 + this._getLittleEndianedDword(array, 4);
+            return this._getNonTypedData(array.subarray(junkLength), dataName);
+        }
+        else
+            throw new Error("Different data name is detected.");
     }
 
     private static _findMarker(array: Uint8Array, type: number, index: number) {

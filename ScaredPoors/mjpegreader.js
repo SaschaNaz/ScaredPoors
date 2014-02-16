@@ -61,26 +61,27 @@ var MJPEGReader = (function () {
     };
 
     MJPEGReader._readRiff = function (array) {
-        var riff = this._getTypedData(array, "RIFF");
-        if (riff.type !== "AVI ")
-            throw new Error("Incorrect Format");
-        var hdrlList = this._readHdrl(riff.data);
-        var moviList = this._readMovi(riff.data.subarray(12 + hdrlList.dataLength));
+        var riff = this._getTypedData(array, "RIFF", "AVI ");
+        var targetDataArray = riff;
+        var hdrlList = this._readHdrl(targetDataArray);
+        targetDataArray = array.subarray(hdrlList.dataArray.byteOffset + hdrlList.dataArray.byteLength);
+        var moviList = this._readMovi(targetDataArray);
+        targetDataArray = array.subarray(moviList.dataArray.byteOffset + moviList.dataArray.byteLength); //JUNK safe subarray
+        var indexes = this._readAVIIndex(targetDataArray);
+        var exportedJPEG = this._exportJPEG(moviList.dataArray, indexes);
     };
 
     MJPEGReader._readHdrl = function (array) {
-        var hdrlList = this._getTypedData(array, "LIST");
-        if (hdrlList.type !== "hdrl")
-            throw new Error("Incorrect Format");
+        var hdrlList = this._getTypedData(array, "LIST", "hdrl");
 
-        var mainHeader = this._readAVIMainHeader(hdrlList.data);
-        return { dataLength: hdrlList.data.byteLength, mainHeader: mainHeader };
+        var mainHeader = this._readAVIMainHeader(hdrlList);
+        return { dataArray: hdrlList, mainHeader: mainHeader };
     };
 
     MJPEGReader._readAVIMainHeader = function (array) {
-        if (this._getFourCC(array, 0) !== "avih")
-            throw new Error("Incorrect Format");
-        var headerArray = array.subarray(8, 8 + this._getLittleEndianedDword(array, 4));
+        //if (this._getFourCC(array, 0) !== "avih")
+        //    throw new Error("Incorrect Format");
+        var headerArray = this._getNonTypedData(array, "avih");
 
         return {
             frameIntervalMicroseconds: this._getLittleEndianedDword(headerArray, 0),
@@ -91,23 +92,54 @@ var MJPEGReader = (function () {
     };
 
     MJPEGReader._readMovi = function (array) {
-        var moviList = this._getTypedData(array, "LIST");
-        if (moviList.type !== "movi")
-            throw new Error("Incorrect Format");
+        var moviList = this._getTypedData(array, "LIST", "movi");
+        return { dataArray: moviList };
     };
 
-    MJPEGReader._getTypedData = function (array, structureName) {
-        var name = this._getFourCC(array, 0);
-        if (name === structureName)
-            return {
-                type: this._getFourCC(array, 8),
-                data: array.subarray(12, 8 + this._getLittleEndianedDword(array, 4))
-            };
-        else if (name === "JUNK") {
+    MJPEGReader._readAVIIndex = function (array) {
+        var indexData = this._getNonTypedData(array, "idx1");
+        var indexes = [];
+        for (var i = 0; i < indexData.byteLength / 16; i += 1) {
+            var offset = this._getLittleEndianedDword(indexData, i * 16 + 8);
+            var length = this._getLittleEndianedDword(indexData, i * 16 + 12);
+            if (length > 0)
+                indexes[i] = { byteOffset: offset - 4, byteLength: length }; //ignoring 'movi' string
+        }
+        return indexes;
+    };
+
+    MJPEGReader._exportJPEG = function (moviList, indexes) {
+        var JPEGs = [];
+        for (var i = 0; i < indexes.length; i++) {
+            if (indexes[i])
+                JPEGs[i] = moviList.subarray(indexes[i].byteOffset + 8, indexes[i].byteOffset + 8 + indexes[i].byteLength);
+        }
+        return JPEGs;
+    };
+
+    MJPEGReader._getTypedData = function (array, structureType, dataName) {
+        var type = this._getFourCC(array, 0);
+        if (type === structureType) {
+            var name = this._getFourCC(array, 8);
+            if (name === dataName)
+                return array.subarray(12, 8 + this._getLittleEndianedDword(array, 4));
+            else
+                throw new Error("Different data name is detected.");
+        } else if (type === "JUNK") {
             var junkLength = 8 + this._getLittleEndianedDword(array, 4);
-            return this._getTypedData(array.subarray(junkLength), structureName);
+            return this._getTypedData(array.subarray(junkLength), structureType, dataName);
         } else
             throw new Error("Incorrect Format");
+    };
+    MJPEGReader._getNonTypedData = function (array, dataName) {
+        var name = this._getFourCC(array, 0);
+        if (name == dataName)
+            return array.subarray(8, 4 + this._getLittleEndianedDword(array, 4));
+        else if (name === "JUNK") {
+            var junkLength = 8 + this._getLittleEndianedDword(array, 4);
+            return this._getNonTypedData(array.subarray(junkLength), dataName);
+        } else
+            throw new Error("Different data name is detected.");
     };
 
     MJPEGReader._findMarker = function (array, type, index) {
