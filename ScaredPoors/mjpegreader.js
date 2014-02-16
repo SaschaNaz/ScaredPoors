@@ -1,3 +1,4 @@
+"use strict";
 var MJPEGReader = (function () {
     function MJPEGReader() {
     }
@@ -52,6 +53,45 @@ var MJPEGReader = (function () {
             nextIndex = startIndex + 1;
         }
     };
+
+    MJPEGReader.prototype.findMarker = function (array, index) {
+        var nextIndex = index;
+        while (true) {
+            var startIndex = Array.prototype.indexOf.apply(array, [0xFF, nextIndex]);
+            if (startIndex == -1)
+                return null;
+            else {
+                var following = array[startIndex + 1];
+                if (following >= 0xC0 && following <= 0xFE)
+                    return { index: startIndex, type: following };
+            }
+            nextIndex = startIndex + 1;
+        }
+    };
     return MJPEGReader;
+})();
+
+var MJPEG = (function () {
+    function MJPEG() {
+    }
+    Object.defineProperty(MJPEG.prototype, "framePerSecond", {
+        get: function () {
+            return 1 / this.frameInterval;
+        },
+        enumerable: true,
+        configurable: true
+    });
+
+    Object.defineProperty(MJPEG.prototype, "duration", {
+        get: function () {
+            return this.totalFrames * this.frameInterval;
+        },
+        enumerable: true,
+        configurable: true
+    });
+
+    MJPEG.prototype.getFrame = function (index) {
+    };
+    return MJPEG;
 })();
 //# sourceMappingURL=mjpegreader.js.map

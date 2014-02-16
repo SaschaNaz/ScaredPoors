@@ -1,10 +1,12 @@
+"use strict";
+
 interface MJPEGFrameData {
     currentTime: number;
     jpegArrayData: Uint8Array;
     //jpegStartIndex: number;
     //jpegFinishIndex: number;
 }
-interface MJPEGData {
+interface MJPEGData {//to be obsolete
     frameRate: number;
     frameDataList: MJPEGFrameData[];
 }
@@ -59,4 +61,37 @@ class MJPEGReader {
             nextIndex = startIndex + 1;
         }
     }
-} 
+
+    private findMarker(array: Uint8Array, index: number) {
+        var nextIndex = index;
+        while (true) {
+            var startIndex = Array.prototype.indexOf.apply(array, [0xFF, nextIndex]);
+            if (startIndex == -1)
+                return null;
+            else {
+				var following = array[startIndex + 1];
+                if (following >= 0xC0 && following <= 0xFE)
+                    return { index: startIndex, type: following };
+            }
+            nextIndex = startIndex + 1;
+        }
+    }
+}
+
+class MJPEG {
+    frameInterval: number;//seconds. Please convert it from microseconds
+    get framePerSecond() {
+        return 1 / this.frameInterval;
+    }
+    totalFrames: number;
+    get duration() {
+        return this.totalFrames * this.frameInterval;
+    }
+    width: number;
+    height: number;
+    private frames: MJPEGFrameData[];
+
+    getFrame(index: number) {
+
+    }
+}
