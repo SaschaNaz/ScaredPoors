@@ -13,22 +13,21 @@ var lastImageData;
 var freezes = [];
 var loadedArrayBuffer;
 var memoryBox = new MemoryBox();
+var equalities = [];
 
 var imageDiffWorker = new Worker("imagediffworker.js");
 imageDiffWorker.addEventListener("message", function (e) {
     if (e.data.type == "equality")
-        info.innerHTML = e.data.equality + " " + e.data.currentTime;
+        equalities.push(e.data);
 });
 window.addEventListener("DOMContentLoaded", function () {
     analyzer.startAnalysis(target, postOperation);
 });
 
-var getImageDataFromArray = function (subarray) {
+var getImageDataFromArray = function (subarray, crop) {
     var dataURI = "data:image/jpeg;base64," + btoa(String.fromCharCode.apply(null, subarray));
     memoryBox.image.src = dataURI;
-    memoryBox.canvas.width = memoryBox.image.naturalWidth;
-    memoryBox.canvas.height = memoryBox.image.naturalHeight;
-    memoryBox.canvasContext.drawImage(memoryBox.image, 0, 0);
+    memoryBox.canvasContext.drawImage(memoryBox.image, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
     return memoryBox.canvasContext.getImageData(0, 0, memoryBox.image.naturalWidth, memoryBox.image.naturalHeight);
 };
 
@@ -69,7 +68,18 @@ var loadMJPEG = function (file) {
     //mjpegWorker.postMessage({ type: "mjpeg", file: file /*arraybuffer: loadedArrayBuffer*/, frameRate: 100 });
     //};
     //reader.readAsArrayBuffer(file);
+    var crop = {
+        offsetX: 140,
+        offsetY: 271,
+        width: 354,
+        height: 155
+    };
     MJPEGReader.read(file, function (mjpeg) {
+        memoryBox.canvas.width = crop.width;
+        memoryBox.canvas.height = crop.height;
+        for (var i = 0; i < mjpeg.duration; i++) {
+            postOperation(i, getImageDataFromArray(mjpeg.getFrameByTime(i), crop));
+        }
     });
 };
 
@@ -78,7 +88,7 @@ var postOperation = function (currentTime, imageData) {
         return;
 
     if (lastSeconds.length)
-        imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageData, data2: imageData, tolerance: 200 });
+        imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageData, data2: imageData, tolerance: 140 });
 
     lastSeconds.unshift(currentTime);
     lastImageData = imageData;

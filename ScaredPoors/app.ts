@@ -16,23 +16,28 @@ var lastImageData: ImageData;
 var freezes = [];
 var loadedArrayBuffer: ArrayBuffer;
 var memoryBox = new MemoryBox();
+var equalities: { equality: number; currentTime: number; }[] = [];
+interface ImageCropInfomation {
+    offsetX: number;
+    offsetY: number;
+    width: number;
+    height: number;
+}
 
 var imageDiffWorker = new Worker("imagediffworker.js");
 imageDiffWorker.addEventListener("message", (e: MessageEvent) => {
     if (e.data.type == "equality")
-        info.innerHTML = e.data.equality + " " + e.data.currentTime;
+        equalities.push(e.data);
 });
 window.addEventListener("DOMContentLoaded", () => {
 
     analyzer.startAnalysis(target, postOperation);
 });
 
-var getImageDataFromArray = (subarray: Uint8Array) => {
+var getImageDataFromArray = (subarray: Uint8Array, crop: ImageCropInfomation) => {
     var dataURI = "data:image/jpeg;base64," + btoa(String.fromCharCode.apply(null, subarray));
     memoryBox.image.src = dataURI;
-    memoryBox.canvas.width = memoryBox.image.naturalWidth;
-    memoryBox.canvas.height = memoryBox.image.naturalHeight;
-    memoryBox.canvasContext.drawImage(memoryBox.image, 0, 0);
+    memoryBox.canvasContext.drawImage(memoryBox.image, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
     return memoryBox.canvasContext.getImageData(0, 0, memoryBox.image.naturalWidth, memoryBox.image.naturalHeight);
 };
 
@@ -77,7 +82,19 @@ var loadMJPEG = (file: Blob) => {
     //mjpegWorker.postMessage({ type: "mjpeg", file: file /*arraybuffer: loadedArrayBuffer*/, frameRate: 100 });
     //};
     //reader.readAsArrayBuffer(file);
-    MJPEGReader.read(file, (mjpeg) => { });
+    var crop: ImageCropInfomation = {
+        offsetX: 140,
+        offsetY: 271,
+        width: 354,
+        height: 155
+    }
+    MJPEGReader.read(file, (mjpeg) => {
+        memoryBox.canvas.width = crop.width;
+        memoryBox.canvas.height = crop.height;
+        for (var i = 0; i < mjpeg.duration; i++) {
+            postOperation(i, getImageDataFromArray(mjpeg.getFrameByTime(i), crop));
+        }
+    });
 };
 
 var postOperation = (currentTime: number, imageData: ImageData) => {
@@ -85,7 +102,7 @@ var postOperation = (currentTime: number, imageData: ImageData) => {
         return;
 
     if (lastSeconds.length)// not 0
-        imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageData, data2: imageData, tolerance: 200 });
+        imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageData, data2: imageData, tolerance: 140 });
 
     lastSeconds.unshift(currentTime);
     lastImageData = imageData;

@@ -1,3 +1,8 @@
+//AVI File Format http://msdn.microsoft.com/en-us/library/windows/desktop/dd318187(v=vs.85).aspx
+//AVI RIFF File Reference http://msdn.microsoft.com/en-us/library/windows/desktop/dd318189(v=vs.85).aspx
+//AVIMAINHEADER structure http://msdn.microsoft.com/en-us/library/windows/desktop/dd318180(v=vs.85).aspx
+//AVIOLDINDEX structure http://msdn.microsoft.com/en-us/library/windows/desktop/dd318181(v=vs.85).aspx
+//BITMAPINFOHEADER structure http://msdn.microsoft.com/en-us/library/windows/desktop/dd318229(v=vs.85).aspx
 "use strict";
 var MJPEGReader = (function () {
     function MJPEGReader() {
@@ -209,6 +214,7 @@ var MJPEG = (function () {
         return;
     };
     MJPEG.prototype.getFrameByTime = function (time) {
+        return this.getFrame(this.totalFrames * time / this.duration);
     };
     return MJPEG;
 })();
