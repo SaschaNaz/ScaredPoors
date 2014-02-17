@@ -25,8 +25,8 @@ function equal(a, b, tolerance) {
 }
 addEventListener('message', (e: MessageEvent) => {
     if (e.data.type === "equal") {
-        var equality = equal(e.data.data1, e.data.data2, e.data.tolerance);
-        postMessage({ type: "equality", equality: equality, currentTime: e.data.currentTime }, null);
+        var isEqual = equal(<ImageData>e.data.data1, e.data.data2, e.data.tolerance);
+        postMessage({ type: "equality", isEqual: isEqual, currentTime: e.data.currentTime }, null);
     }
 });
 

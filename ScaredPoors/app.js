@@ -1,3 +1,4 @@
+var _this = this;
 var MemoryBox = (function () {
     function MemoryBox() {
         this.canvas = document.createElement("canvas");
@@ -16,19 +17,15 @@ var memoryBox = new MemoryBox();
 var equalities = [];
 
 var imageDiffWorker = new Worker("imagediffworker.js");
-imageDiffWorker.addEventListener("message", function (e) {
-    if (e.data.type == "equality")
-        equalities.push(e.data);
-});
-window.addEventListener("DOMContentLoaded", function () {
-    analyzer.startAnalysis(target, postOperation);
-});
 
+//window.addEventListener("DOMContentLoaded", () => {
+//    analyzer.startAnalysis(target, postOperation);
+//});
 var getImageDataFromArray = function (subarray, crop) {
     var dataURI = "data:image/jpeg;base64," + btoa(String.fromCharCode.apply(null, subarray));
     memoryBox.image.src = dataURI;
     memoryBox.canvasContext.drawImage(memoryBox.image, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
-    return memoryBox.canvasContext.getImageData(0, 0, memoryBox.image.naturalWidth, memoryBox.image.naturalHeight);
+    return memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height);
 };
 
 var loadVideo = function (file) {
@@ -77,16 +74,28 @@ var loadMJPEG = function (file) {
     MJPEGReader.read(file, function (mjpeg) {
         memoryBox.canvas.width = crop.width;
         memoryBox.canvas.height = crop.height;
-        for (var i = 0; i < mjpeg.duration; i++) {
-            postOperation(i, getImageDataFromArray(mjpeg.getFrameByTime(i), crop));
-        }
+
+        //for (var i = 0; i < mjpeg.duration; i++) {
+        //    postOperation(i, getImageDataFromArray(mjpeg.getFrameByTime(i), crop));
+        //}
+        var i = 0;
+        var operate = function () {
+            equalAsync(i, getImageDataFromArray(mjpeg.getFrameByTime(i), crop), function (equality) {
+                equalities.push(equality);
+                i++;
+                window.setImmediate(operate);
+            });
+        };
     });
 };
 
-var postOperation = function (currentTime, imageData) {
-    if (lastSeconds.length && lastSeconds[0] > currentTime - 1)
-        return;
-
+var equalAsync = function (currentTime, imageData, onend) {
+    var callback = function (e) {
+        imageDiffWorker.removeEventListener("message", callback);
+        if (e.data.type == "equality")
+            onend(e.data);
+    };
+    imageDiffWorker.addEventListener("message", callback.bind(_this));
     if (lastSeconds.length)
         imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageData, data2: imageData, tolerance: 140 });
 

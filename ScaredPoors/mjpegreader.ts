@@ -19,6 +19,10 @@ interface AVIOldIndex {
     byteOffset: number;
     byteLength: number;
 }
+interface EqualityData {
+    currentTime: number;
+    isEqual: boolean;
+}
 class MJPEGReader {
     //read(file: File, frameRate: number, onframeread: (loadedData: MJPEGData) => any) {
     //    var reader = new FileReader();

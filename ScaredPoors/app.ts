@@ -25,20 +25,16 @@ interface ImageCropInfomation {
 }
 
 var imageDiffWorker = new Worker("imagediffworker.js");
-imageDiffWorker.addEventListener("message", (e: MessageEvent) => {
-    if (e.data.type == "equality")
-        equalities.push(e.data);
-});
-window.addEventListener("DOMContentLoaded", () => {
+//window.addEventListener("DOMContentLoaded", () => {
 
-    analyzer.startAnalysis(target, postOperation);
-});
+//    analyzer.startAnalysis(target, postOperation);
+//});
 
 var getImageDataFromArray = (subarray: Uint8Array, crop: ImageCropInfomation) => {
     var dataURI = "data:image/jpeg;base64," + btoa(String.fromCharCode.apply(null, subarray));
     memoryBox.image.src = dataURI;
     memoryBox.canvasContext.drawImage(memoryBox.image, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
-    return memoryBox.canvasContext.getImageData(0, 0, memoryBox.image.naturalWidth, memoryBox.image.naturalHeight);
+    return memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height);
 };
 
 
@@ -91,16 +87,27 @@ var loadMJPEG = (file: Blob) => {
     MJPEGReader.read(file, (mjpeg) => {
         memoryBox.canvas.width = crop.width;
         memoryBox.canvas.height = crop.height;
-        for (var i = 0; i < mjpeg.duration; i++) {
-            postOperation(i, getImageDataFromArray(mjpeg.getFrameByTime(i), crop));
+        //for (var i = 0; i < mjpeg.duration; i++) {
+        //    postOperation(i, getImageDataFromArray(mjpeg.getFrameByTime(i), crop));
+        //}
+        var i = 0;
+        var operate = () => {
+            equalAsync(i, getImageDataFromArray(mjpeg.getFrameByTime(i), crop), (equality) => {
+                equalities.push(equality);
+                i++;
+                window.setImmediate(operate);
+            });
         }
     });
 };
 
-var postOperation = (currentTime: number, imageData: ImageData) => {
-    if (lastSeconds.length && lastSeconds[0] > currentTime - 1)
-        return;
-
+var equalAsync = (currentTime: number, imageData: ImageData, onend: (equality) => any) => {
+    var callback = (e: MessageEvent) => {
+        imageDiffWorker.removeEventListener("message", callback);
+        if (e.data.type == "equality")
+            onend(e.data);
+    };
+    imageDiffWorker.addEventListener("message", callback.bind(this));
     if (lastSeconds.length)// not 0
         imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageData, data2: imageData, tolerance: 140 });
 
