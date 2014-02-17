@@ -11,7 +11,6 @@ declare var target: HTMLVideoElement;
 declare var info: HTMLSpanElement;
 declare var imagediff: any;
 var analyzer = new ScaredPoors();
-var lastSeconds = [];
 var lastImageData: ImageData;
 var freezes = [];
 var loadedArrayBuffer: ArrayBuffer;
@@ -87,17 +86,21 @@ var loadMJPEG = (file: Blob) => {
     MJPEGReader.read(file, (mjpeg) => {
         memoryBox.canvas.width = crop.width;
         memoryBox.canvas.height = crop.height;
-        //for (var i = 0; i < mjpeg.duration; i++) {
-        //    postOperation(i, getImageDataFromArray(mjpeg.getFrameByTime(i), crop));
-        //}
-        var i = 0;
-        var operate = () => {
+        lastImageData = getImageDataFromArray(mjpeg.frames[0], crop);
+        var i = 1;
+        var operateAsync = () => {
             equalAsync(i, getImageDataFromArray(mjpeg.getFrameByTime(i), crop), (equality) => {
+                //equality operation start
+
                 equalities.push(equality);
                 i++;
-                window.setImmediate(operate);
+
+                //equality operation end
+                if (i <= mjpeg.duration)
+                    window.setImmediate(operateAsync);
             });
         }
+        operateAsync();
     });
 };
 
@@ -107,10 +110,9 @@ var equalAsync = (currentTime: number, imageData: ImageData, onend: (equality) =
         if (e.data.type == "equality")
             onend(e.data);
     };
-    imageDiffWorker.addEventListener("message", callback.bind(this));
-    if (lastSeconds.length)// not 0
+    imageDiffWorker.addEventListener("message", callback);
+    if (lastImageData)
         imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageData, data2: imageData, tolerance: 140 });
 
-    lastSeconds.unshift(currentTime);
     lastImageData = imageData;
 };

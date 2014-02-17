@@ -1,4 +1,3 @@
-var _this = this;
 var MemoryBox = (function () {
     function MemoryBox() {
         this.canvas = document.createElement("canvas");
@@ -9,7 +8,6 @@ var MemoryBox = (function () {
 })();
 
 var analyzer = new ScaredPoors();
-var lastSeconds = [];
 var lastImageData;
 var freezes = [];
 var loadedArrayBuffer;
@@ -74,18 +72,20 @@ var loadMJPEG = function (file) {
     MJPEGReader.read(file, function (mjpeg) {
         memoryBox.canvas.width = crop.width;
         memoryBox.canvas.height = crop.height;
-
-        //for (var i = 0; i < mjpeg.duration; i++) {
-        //    postOperation(i, getImageDataFromArray(mjpeg.getFrameByTime(i), crop));
-        //}
-        var i = 0;
-        var operate = function () {
+        lastImageData = getImageDataFromArray(mjpeg.frames[0], crop);
+        var i = 1;
+        var operateAsync = function () {
             equalAsync(i, getImageDataFromArray(mjpeg.getFrameByTime(i), crop), function (equality) {
+                //equality operation start
                 equalities.push(equality);
                 i++;
-                window.setImmediate(operate);
+
+                //equality operation end
+                if (i <= mjpeg.duration)
+                    window.setImmediate(operateAsync);
             });
         };
+        operateAsync();
     });
 };
 
@@ -95,11 +95,10 @@ var equalAsync = function (currentTime, imageData, onend) {
         if (e.data.type == "equality")
             onend(e.data);
     };
-    imageDiffWorker.addEventListener("message", callback.bind(_this));
-    if (lastSeconds.length)
+    imageDiffWorker.addEventListener("message", callback);
+    if (lastImageData)
         imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageData, data2: imageData, tolerance: 140 });
 
-    lastSeconds.unshift(currentTime);
     lastImageData = imageData;
 };
 //# sourceMappingURL=app.js.map
