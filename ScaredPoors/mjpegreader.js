@@ -126,7 +126,7 @@ var MJPEGReader = (function () {
         var JPEGs = [];
         for (var i = 0; i < indexes.length; i++) {
             if (indexes[i])
-                JPEGs[i] = moviList.subarray(indexes[i].byteOffset + 8, indexes[i].byteOffset + 8 + indexes[i].byteLength);
+                JPEGs[i] = new Blob([moviList.subarray(indexes[i].byteOffset + 8, indexes[i].byteOffset + 8 + indexes[i].byteLength)], { type: "image/jpeg" });
         }
         return JPEGs;
     };

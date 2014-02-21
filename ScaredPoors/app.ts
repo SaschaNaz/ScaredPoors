@@ -29,9 +29,11 @@ var imageDiffWorker = new Worker("imagediffworker.js");
 //    analyzer.startAnalysis(target, postOperation);
 //});
 
-var getImageDataFromArray = (subarray: Uint8Array, crop: ImageCropInfomation) => {
-    var dataURI = "data:image/jpeg;base64," + btoa(String.fromCharCode.apply(null, subarray));
-    memoryBox.image.src = dataURI;
+var getImageData = (file: Blob, width: number, height: number, crop: ImageCropInfomation) => {
+    memoryBox.image.src = URL.createObjectURL(file);
+    if (memoryBox.image.naturalWidth !== width
+        || memoryBox.image.naturalHeight !== height)
+        console.warn(["Different image size is detected.", memoryBox.image.naturalWidth, width, memoryBox.image.naturalHeight, height].join(" "));
     memoryBox.canvasContext.drawImage(memoryBox.image, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
     return memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height);
 };
@@ -86,10 +88,10 @@ var loadMJPEG = (file: Blob) => {
     MJPEGReader.read(file, (mjpeg) => {
         memoryBox.canvas.width = crop.width;
         memoryBox.canvas.height = crop.height;
-        lastImageData = getImageDataFromArray(mjpeg.frames[0], crop);
+        lastImageData = getImageData(mjpeg.frames[0], mjpeg.width, mjpeg.height, crop);
         var i = 1;
         var operateAsync = () => {
-            equalAsync(i, getImageDataFromArray(mjpeg.getFrameByTime(i), crop), (equality) => {
+            equalAsync(i, getImageData(mjpeg.getFrameByTime(i), mjpeg.width, mjpeg.height, crop), (equality) => {
                 //equality operation start
 
                 equalities.push(equality);

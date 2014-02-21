@@ -144,10 +144,10 @@ class MJPEGReader {
     }
 
     private static _exportJPEG(moviList: Uint8Array, indexes: AVIOldIndex[]) {
-        var JPEGs: Uint8Array[] = [];
+        var JPEGs: Blob[] = [];
         for (var i = 0; i < indexes.length; i++) {
             if (indexes[i])
-                JPEGs[i] = moviList.subarray(indexes[i].byteOffset + 8, indexes[i].byteOffset + 8 + indexes[i].byteLength);
+                JPEGs[i] = new Blob([moviList.subarray(indexes[i].byteOffset + 8, indexes[i].byteOffset + 8 + indexes[i].byteLength)], { type: "image/jpeg" });
         }
         return JPEGs;
     }
@@ -218,7 +218,7 @@ class MJPEG {
     }
     width: number;
     height: number;
-    frames: Uint8Array[];
+    frames: Blob[];
 
     getFrame(index: number) {
         var i = index;
