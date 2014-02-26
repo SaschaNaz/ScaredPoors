@@ -166,5 +166,14 @@ var displayEqualities = (freezings: Occurrence[]) => {
 
         movedLastTime = false;
     });
-    return continuousFreezing.map((freezing) => { return JSON.stringify(freezing); }).join("\r\n");
+    return continuousFreezing.map((freezing) => { return JSON.stringify(freezing); }).join("\r\n")
+        + "\r\n\r\n" + getTotalDuration(continuousFreezing);
+}
+
+var getTotalDuration = (continuities: Continuity[]) => {
+    var total = 0;
+    continuities.forEach((continuity) => {
+        total += continuity.duration;
+    });
+    return total;
 }

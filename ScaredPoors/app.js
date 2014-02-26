@@ -138,6 +138,14 @@ var displayEqualities = function (freezings) {
     });
     return continuousFreezing.map(function (freezing) {
         return JSON.stringify(freezing);
-    }).join("\r\n");
+    }).join("\r\n") + "\r\n\r\n" + getTotalDuration(continuousFreezing);
+};
+
+var getTotalDuration = function (continuities) {
+    var total = 0;
+    continuities.forEach(function (continuity) {
+        total += continuity.duration;
+    });
+    return total;
 };
 //# sourceMappingURL=app.js.map
