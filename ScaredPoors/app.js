@@ -8,7 +8,7 @@ var MemoryBox = (function () {
 })();
 
 var analyzer = new ScaredPoors();
-var lastImageData;
+var lastImageFrame = [];
 var freezes = [];
 var loadedArrayBuffer;
 var memoryBox = new MemoryBox();
@@ -73,17 +73,36 @@ var loadMJPEG = function (file) {
     MJPEGReader.read(file, function (mjpeg) {
         memoryBox.canvas.width = crop.width;
         memoryBox.canvas.height = crop.height;
-        lastImageData = getImageData(mjpeg.frames[0], mjpeg.width, mjpeg.height, crop);
-        var i = 1;
-        var operateAsync = function () {
-            equalAsync(i, getImageData(mjpeg.getFrameByTime(i), mjpeg.width, mjpeg.height, crop), function (equality) {
-                //equality operation start
-                equalities.push(equality);
-                i++;
 
-                //equality operation end
-                if (i <= mjpeg.duration)
-                    window.setImmediate(operateAsync);
+        var i = 0;
+         {
+            var frame = mjpeg.getForwardFrame(i);
+            if (!frame)
+                return;
+            i = frame.index;
+            var time = i / mjpeg.totalFrames * mjpeg.duration;
+            var imageData = getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
+            lastImageFrame.push({ time: time, imageData: imageData });
+        }
+
+        var operateAsync = function () {
+            var frame = mjpeg.getForwardFrame(i + 1);
+            if (!frame) {
+                alert("Complete. Open the browser log to see the result.");
+                console.log(equalities.map(function (equality) {
+                    return JSON.stringify(equality);
+                }).join("\r\n"));
+                return;
+            }
+            i = frame.index;
+            var time = i / mjpeg.totalFrames * mjpeg.duration;
+            var imageData = getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
+            equalAsync(time, imageData, function (equality) {
+                equalities.push(equality);
+                lastImageFrame.push({ time: time, imageData: imageData });
+                while (time - lastImageFrame[0].time > 0.25)
+                    lastImageFrame.shift();
+                window.setImmediate(operateAsync);
             });
         };
         operateAsync();
@@ -97,9 +116,6 @@ var equalAsync = function (currentTime, imageData, onend) {
             onend(e.data);
     };
     imageDiffWorker.addEventListener("message", callback);
-    if (lastImageData)
-        imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageData, data2: imageData, tolerance: 140 });
-
-    lastImageData = imageData;
+    imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageFrame[0].imageData, data2: imageData, colorTolerance: 100, pixelTolerance: 30 });
 };
 //# sourceMappingURL=app.js.map

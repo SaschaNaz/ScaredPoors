@@ -1,30 +1,55 @@
+"use strict";
 // ImageData Equality Operators
-function equalWidth(a, b) {
-    return a.width === b.width;
-}
-function equalHeight(a, b) {
-    return a.height === b.height;
-}
-function equalDimensions(a, b) {
-    return equalHeight(a, b) && equalWidth(a, b);
-}
-function equal(a, b, tolerance) {
-    var aData = a.data, bData = b.data, length = aData.length, i;
-
-    tolerance = tolerance || 0;
-
-    if (!equalDimensions(a, b))
-        return false;
-    for (i = length; i--;)
-        if (aData[i] !== bData[i] && Math.abs(aData[i] - bData[i]) > tolerance)
+var ImageEquality = (function () {
+    function ImageEquality() {
+    }
+    ImageEquality.isEqual = function (data1, data2, colorTolerance, pixelTolerance) {
+        if (data1.width != data2.width || data1.height != data2.height)
             return false;
 
-    return true;
-}
+        var tolerancedPixels = 0;
+        for (var i = 0; i < data1.data.length; i += 4) {
+            if (this.getColorDistance(data1.data.subarray(i, i + 4), data2.data.subarray(i, i + 4)) >= colorTolerance) {
+                tolerancedPixels++;
+                if (tolerancedPixels >= pixelTolerance)
+                    return false;
+            }
+        }
+        return true;
+    };
+    ImageEquality.getColorDistance = function (rgba1, rgba2) {
+        return Math.sqrt(Math.pow(rgba1[0] - rgba2[0], 2) + Math.pow(rgba1[1] - rgba2[1], 2) + Math.pow(rgba1[2] - rgba2[2], 2));
+    };
+    return ImageEquality;
+})();
+
+//function equalWidth(a: ImageData, b: ImageData) {
+//    return a.width === b.width;
+//}
+//function equalHeight(a: ImageData, b: ImageData) {
+//    return a.height === b.height;
+//}
+//function equalDimensions(a: ImageData, b: ImageData) {
+//    return equalHeight(a, b) && equalWidth(a, b);
+//}
+//function equal(a: ImageData, b: ImageData, tolerance: number) {
+//    var
+//        aData = a.data,
+//        bData = b.data,
+//        length = aData.length,
+//        i;
+//    tolerance = tolerance || 0;
+//    if (!equalDimensions(a, b)) return false;
+//    for (i = length; i--;) if (aData[i] !== bData[i] && Math.abs(aData[i] - bData[i]) > tolerance) return false;
+//    return true;
+//}
 addEventListener('message', function (e) {
     if (e.data.type === "equal") {
-        var isEqual = equal(e.data.data1, e.data.data2, e.data.tolerance);
-        postMessage({ type: "equality", isEqual: isEqual, currentTime: e.data.currentTime }, null);
+        postMessage({
+            type: "equality",
+            isEqual: ImageEquality.isEqual(e.data.data1, e.data.data2, e.data.colorTolerance, e.data.pixelTolerance),
+            currentTime: e.data.currentTime
+        }, null);
     }
 });
 //# sourceMappingURL=imagediffworker.js.map
