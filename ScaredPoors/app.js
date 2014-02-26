@@ -9,7 +9,6 @@ var MemoryBox = (function () {
 
 var analyzer = new ScaredPoors();
 var lastImageFrame = [];
-var freezes = [];
 var loadedArrayBuffer;
 var memoryBox = new MemoryBox();
 var equalities = [];
@@ -120,20 +119,25 @@ var equalAsync = function (currentTime, imageData, onend) {
 var displayEqualities = function (freezings) {
     var continuousFreezing = [];
     var movedLastTime = true;
+    var last;
     freezings.forEach(function (freezing) {
         if (!freezing.isOccured) {
             movedLastTime = true;
             return;
         }
-        var last = continuousFreezing[continuousFreezing.length - 1];
+
         if (movedLastTime) {
-            last.duration = last.end - last.start;
-            continuousFreezing.push({ start: freezing.watched, end: freezing.judged });
+            if (last)
+                last.duration = last.end - last.start;
+            last = { start: freezing.watched, end: freezing.judged };
+            continuousFreezing.push(last);
         } else
             last.end = freezing.judged;
 
         movedLastTime = false;
     });
-    return JSON.stringify(continuousFreezing);
+    return continuousFreezing.map(function (freezing) {
+        return JSON.stringify(freezing);
+    }).join("\r\n");
 };
 //# sourceMappingURL=app.js.map

@@ -12,7 +12,6 @@ declare var info: HTMLSpanElement;
 declare var imagediff: any;
 var analyzer = new ScaredPoors();
 var lastImageFrame: FrameData[] = [];
-var freezes = [];
 var loadedArrayBuffer: ArrayBuffer;
 var memoryBox = new MemoryBox();
 var equalities: Occurrence[] = [];
@@ -149,20 +148,23 @@ var equalAsync = (currentTime: number, imageData: ImageData, onend: (equality) =
 var displayEqualities = (freezings: Occurrence[]) => {
     var continuousFreezing: Continuity[] = [];
     var movedLastTime = true;
+    var last: Continuity;
     freezings.forEach((freezing) => {
         if (!freezing.isOccured) {
             movedLastTime = true;
             return;
         }
-        var last = continuousFreezing[continuousFreezing.length - 1];
+
         if (movedLastTime) {
-            last.duration = last.end - last.start;
-            continuousFreezing.push({ start: freezing.watched, end: freezing.judged });
+            if (last)
+                last.duration = last.end - last.start;
+            last = { start: freezing.watched, end: freezing.judged };
+            continuousFreezing.push(last);
         }
         else
             last.end = freezing.judged;
 
         movedLastTime = false;
     });
-    return JSON.stringify(continuousFreezing);
+    return continuousFreezing.map((freezing) => { return JSON.stringify(freezing); }).join("\r\n");
 }
