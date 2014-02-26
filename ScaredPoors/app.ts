@@ -15,7 +15,7 @@ var lastImageFrame: FrameData[] = [];
 var freezes = [];
 var loadedArrayBuffer: ArrayBuffer;
 var memoryBox = new MemoryBox();
-var equalities: { equality: number; currentTime: number; }[] = [];
+var equalities: Occurrence[] = [];
 interface ImageCropInfomation {
     offsetX: number;
     offsetY: number;
@@ -25,6 +25,16 @@ interface ImageCropInfomation {
 interface FrameData {
     time: number;
     imageData: ImageData;
+}
+interface Occurrence {
+    isOccured: number;
+    watched: number;
+    judged: number;
+}
+interface Continuity {
+    start: number;
+    end: number;
+    duration?: number;
 }
 
 var imageDiffWorker = new Worker("imagediffworker.js");
@@ -107,15 +117,15 @@ var loadMJPEG = (file: Blob) => {
         var operateAsync = () => {
             var frame = mjpeg.getForwardFrame(i + 1);
             if (!frame) {
-                alert("Complete. Open the browser log to see the result.");
-                console.log(equalities.map(function (equality) { return JSON.stringify(equality) }).join("\r\n"));
+                //console.log(equalities.map(function (equality) { return JSON.stringify(equality) }).join("\r\n"));
+                info.innerText = displayEqualities(equalities);
                 return;
             }
             i = frame.index;
             var time = i / mjpeg.totalFrames * mjpeg.duration;
             var imageData = getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
             equalAsync(time, imageData, (equality) => {
-                equalities.push(equality);
+                equalities.push({ watched: lastImageFrame[0].time, judged: equality.currentTime, isOccured: equality.isEqual });
                 lastImageFrame.push({ time: time, imageData: imageData });
                 while (time - lastImageFrame[0].time > 0.25)
                     lastImageFrame.shift();
@@ -135,3 +145,24 @@ var equalAsync = (currentTime: number, imageData: ImageData, onend: (equality) =
     imageDiffWorker.addEventListener("message", callback);
     imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageFrame[0].imageData, data2: imageData, colorTolerance: 100, pixelTolerance: 30 });
 };
+
+var displayEqualities = (freezings: Occurrence[]) => {
+    var continuousFreezing: Continuity[] = [];
+    var movedLastTime = true;
+    freezings.forEach((freezing) => {
+        if (!freezing.isOccured) {
+            movedLastTime = true;
+            return;
+        }
+        var last = continuousFreezing[continuousFreezing.length - 1];
+        if (movedLastTime) {
+            last.duration = last.end - last.start;
+            continuousFreezing.push({ start: freezing.watched, end: freezing.judged });
+        }
+        else
+            last.end = freezing.judged;
+
+        movedLastTime = false;
+    });
+    return JSON.stringify(continuousFreezing);
+}

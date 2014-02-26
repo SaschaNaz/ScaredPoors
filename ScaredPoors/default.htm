@@ -17,7 +17,7 @@
         <label for="videoInput">Load a web video file: </label><input id="videoInput" type="file" onchange="loadVideo(event.target.files[0])" />
         <label for="mjpegInput">Load an MJPEG/AVI file: </label><input id="mjpegInput" type="file" onchange="loadMJPEG(event.target.files[0])" accept="video/x-msvideo" />
         <video id="target" style="width: 640px; height: 480px;" controls="controls"></video>
-        <span id="info"></span>
+        <textarea id="info" style="width: 640px; height: 480px;"></textarea>
     </div>
 </body>
 </html>

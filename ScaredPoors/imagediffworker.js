@@ -52,4 +52,27 @@ addEventListener('message', function (e) {
         }, null);
     }
 });
+//var lastSeconds = [];
+//var lastImageData: ImageData;
+//addEventListener('message', (e) => {
+//    if (e.data.type === "MJPEGData") {
+//        var tolerance: number = e.data.tolerance;
+//        var mjpegData: MJPEGData = e.data.MJPEGData;
+//        var arraybuffer = mjpegData.arraybuffer;
+//        var array = new Uint8Array(arraybuffer);
+//        mjpegData.frameDataList.forEach((frame) => {
+//            calculateEquality(frame.currentTime, getImageDataFromArray(array.subarray(frame.jpegStartIndex, frame.jpegFinishIndex)));
+//        });
+//    }
+//});
+//var calculateEquality = (currentTime: number, imageData: ImageData) => {
+//    if (lastSeconds.length && lastSeconds[0] > currentTime - 1)
+//        return;
+//    if (lastSeconds.length) {// not 0
+//        var equality = equal(imageData, lastImageData, 200);
+//        postMessage((equality + " " + currentTime), null);
+//    }
+//    lastSeconds.unshift(currentTime);
+//    lastImageData = imageData;
+//};
 //# sourceMappingURL=imagediffworker.js.map

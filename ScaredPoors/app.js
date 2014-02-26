@@ -88,17 +88,15 @@ var loadMJPEG = function (file) {
         var operateAsync = function () {
             var frame = mjpeg.getForwardFrame(i + 1);
             if (!frame) {
-                alert("Complete. Open the browser log to see the result.");
-                console.log(equalities.map(function (equality) {
-                    return JSON.stringify(equality);
-                }).join("\r\n"));
+                //console.log(equalities.map(function (equality) { return JSON.stringify(equality) }).join("\r\n"));
+                info.innerText = displayEqualities(equalities);
                 return;
             }
             i = frame.index;
             var time = i / mjpeg.totalFrames * mjpeg.duration;
             var imageData = getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
             equalAsync(time, imageData, function (equality) {
-                equalities.push(equality);
+                equalities.push({ watched: lastImageFrame[0].time, judged: equality.currentTime, isOccured: equality.isEqual });
                 lastImageFrame.push({ time: time, imageData: imageData });
                 while (time - lastImageFrame[0].time > 0.25)
                     lastImageFrame.shift();
@@ -117,5 +115,25 @@ var equalAsync = function (currentTime, imageData, onend) {
     };
     imageDiffWorker.addEventListener("message", callback);
     imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageFrame[0].imageData, data2: imageData, colorTolerance: 100, pixelTolerance: 30 });
+};
+
+var displayEqualities = function (freezings) {
+    var continuousFreezing = [];
+    var movedLastTime = true;
+    freezings.forEach(function (freezing) {
+        if (!freezing.isOccured) {
+            movedLastTime = true;
+            return;
+        }
+        var last = continuousFreezing[continuousFreezing.length - 1];
+        if (movedLastTime) {
+            last.duration = last.end - last.start;
+            continuousFreezing.push({ start: freezing.watched, end: freezing.judged });
+        } else
+            last.end = freezing.judged;
+
+        movedLastTime = false;
+    });
+    return JSON.stringify(continuousFreezing);
 };
 //# sourceMappingURL=app.js.map
