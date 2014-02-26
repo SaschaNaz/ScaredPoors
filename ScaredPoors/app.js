@@ -113,7 +113,7 @@ var equalAsync = function (currentTime, imageData, onend) {
             onend(e.data);
     };
     imageDiffWorker.addEventListener("message", callback);
-    imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageFrame[0].imageData, data2: imageData, colorTolerance: 100, pixelTolerance: 30 });
+    imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageFrame[0].imageData, data2: imageData, colorTolerance: 100, pixelTolerance: 100 });
 };
 
 var displayEqualities = function (freezings) {
@@ -128,14 +128,15 @@ var displayEqualities = function (freezings) {
 
         if (movedLastTime) {
             if (last)
-                last.duration = last.end - last.start;
-            last = { start: freezing.watched, end: freezing.judged };
+                last.duration = parseFloat((last.end - last.start).toFixed(3));
+            last = { start: parseFloat(freezing.watched.toFixed(3)), end: parseFloat(freezing.judged.toFixed(3)) };
             continuousFreezing.push(last);
         } else
-            last.end = freezing.judged;
+            last.end = parseFloat(freezing.judged.toFixed(3));
 
         movedLastTime = false;
     });
+    last.duration = parseFloat((last.end - last.start).toFixed(3));
     return continuousFreezing.map(function (freezing) {
         return JSON.stringify(freezing);
     }).join("\r\n") + "\r\n\r\n" + getTotalDuration(continuousFreezing);
