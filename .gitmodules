@@ -1,3 +1,9 @@
 [submodule "ScaredPoors/imagediff"]
 	path = ScaredPoors/imagediff
 	url = https://github.com/HumbleSoftware/js-imagediff.git
+[submodule "submodules/promise"]
+	path = submodules/promise
+	url = https://github.com/taylorhakes/promise-polyfill
+[submodule "submodules/streams"]
+	path = submodules/streams
+	url = https://github.com/SaschaNaz/Streams.git
