@@ -25,8 +25,6 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="app.ts" />
-    <TypeScriptCompile Include="mjpegworker.ts" />
-    <TypeScriptCompile Include="mjpegreader.ts" />
     <TypeScriptCompile Include="scaredpoors.ts" />
     <TypeScriptCompile Include="imagediffworker.ts" />
     <TypeScriptCompile Include="submodules\es6-promises.d.ts" />
@@ -73,6 +71,7 @@
     <TypeScriptRemoveComments>false</TypeScriptRemoveComments>
     <TypeScriptSourceMap>true</TypeScriptSourceMap>
     <TypeScriptModuleKind>AMD</TypeScriptModuleKind>
+    <TypeScriptNoImplicitAny>True</TypeScriptNoImplicitAny>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <TypeScriptTarget>ES5</TypeScriptTarget>

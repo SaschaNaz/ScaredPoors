@@ -7,3 +7,6 @@
 [submodule "submodules/streams"]
 	path = submodules/streams
 	url = https://github.com/SaschaNaz/Streams.git
+[submodule "submodules/mjpegdecoder"]
+	path = submodules/mjpegdecoder
+	url = https://github.com/SaschaNaz/MJPEGDecoder.git
