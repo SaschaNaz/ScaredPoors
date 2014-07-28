@@ -11,7 +11,7 @@ declare var target: HTMLVideoElement;
 declare var info: HTMLSpanElement;
 declare var imagediff: any;
 var analyzer = new ScaredPoors();
-var lastImageFrame: FrameData[] = [];
+var lastImageFrame: FrameData;
 var loadedArrayBuffer: ArrayBuffer;
 var memoryBox = new MemoryBox();
 var equalities: Occurrence[] = [];
@@ -91,6 +91,9 @@ var loadMJPEG = (file: Blob) => {
         memoryBox.canvas.width = crop.width;
         memoryBox.canvas.height = crop.height;    
 
+        var i = 0;
+        var time: number;
+
         var finish = () => {
             // operation chain ends
             info.innerText = displayEqualities(equalities);
@@ -98,74 +101,37 @@ var loadMJPEG = (file: Blob) => {
             return Promise.reject();
         };
 
-        var i = 0;
-        var time: number;
         var sequence = mjpeg.getForwardFrame(0)
             .then((frame) => {
-                if (!frame)
-                    return Promise.reject();
                 i = frame.index;
                 time = i / mjpeg.totalFrames * mjpeg.duration;
                 return getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
             }).then((imageData) => {
-                lastImageFrame.push({ time: time, imageData: imageData });
-            }, finish);
+                lastImageFrame = { time: time, imageData: imageData };
+            });
 
         var asyncOperation = () => {
             var _imageData: ImageData;
-            return mjpeg.getForwardFrame(i + 1)
+            var next = Math.floor(i + 0.2 / mjpeg.frameInterval);
+            if (next >= mjpeg.totalFrames)
+                return finish();
+
+            return mjpeg.getForwardFrame(next)
                 .then<ImageData>((frame) => {
                     i = frame.index;
                     time = i / mjpeg.totalFrames * mjpeg.duration;
                     return getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
-                }, finish).then((imageData) => {
+                }).then((imageData) => {
                     _imageData = imageData;
                     return equal(time, imageData);
                 }).then((equality) => {
-                    equalities.push({ watched: lastImageFrame[0].time, judged: equality.currentTime, isOccured: equality.isEqual });
-                    lastImageFrame.push({ time: time, imageData: _imageData });
-                    while (time - lastImageFrame[0].time > 0.25)
-                        lastImageFrame.shift();
+                    equalities.push({ watched: lastImageFrame.time, judged: equality.currentTime, isOccured: equality.isEqual });
+                    lastImageFrame = { time: time, imageData: _imageData };
                     sequence = sequence.then<void>(asyncOperation); // chain operation
                 });
         };
         sequence.then(asyncOperation);
     }));
-    //MJPEGReader.read(file, (mjpeg) => {
-    //    memoryBox.canvas.width = crop.width;
-    //    memoryBox.canvas.height = crop.height;
-
-    //    var i = 0;
-    //    {
-    //        var frame = mjpeg.getForwardFrame(i);
-    //        if (!frame)
-    //            return;
-    //        i = frame.index;
-    //        var time = i / mjpeg.totalFrames * mjpeg.duration;
-    //        var imageData = getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
-    //        lastImageFrame.push({ time: time, imageData: imageData });
-    //    }
-
-    //    var operateAsync = () => {
-    //        var frame = mjpeg.getForwardFrame(i + 1);
-    //        if (!frame) {
-    //            //console.log(equalities.map(function (equality) { return JSON.stringify(equality) }).join("\r\n"));
-    //            info.innerText = displayEqualities(equalities);
-    //            return;
-    //        }
-    //        i = frame.index;
-    //        var time = i / mjpeg.totalFrames * mjpeg.duration;
-    //        var imageData = getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
-    //        equalAsync(time, imageData, (equality) => {
-    //            equalities.push({ watched: lastImageFrame[0].time, judged: equality.currentTime, isOccured: equality.isEqual });
-    //            lastImageFrame.push({ time: time, imageData: imageData });
-    //            while (time - lastImageFrame[0].time > 0.25)
-    //                lastImageFrame.shift();
-    //            window.setImmediate(operateAsync);
-    //        });
-    //    }
-    //    operateAsync();
-    //});
 };
 
 var equal = (currentTime: number, imageData: ImageData) => {
@@ -176,7 +142,7 @@ var equal = (currentTime: number, imageData: ImageData) => {
                 resolve(e.data);
         };
         imageDiffWorker.addEventListener("message", callback);
-        imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageFrame[0].imageData, data2: imageData, colorTolerance: 100, pixelTolerance: 100 });
+        imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageFrame.imageData, data2: imageData, colorTolerance: 100, pixelTolerance: 100 });
     });
 };
 
@@ -191,8 +157,11 @@ var displayEqualities = (freezings: Occurrence[]) => {
         }
 
         if (movedLastTime) {
-            if (last)
+            if (last) {
                 last.duration = parseFloat((last.end - last.start).toFixed(3));
+                if (last.duration < 1)
+                    continuousFreezing.pop();
+            }
             last = { start: parseFloat(freezing.watched.toFixed(3)), end: parseFloat(freezing.judged.toFixed(3)) };
             continuousFreezing.push(last);
         }

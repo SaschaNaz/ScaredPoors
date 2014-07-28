@@ -69,6 +69,9 @@ var loadMJPEG = function (file) {
             memoryBox.canvas.width = crop.width;
             memoryBox.canvas.height = crop.height;
 
+            var i = 0;
+            var time;
+
             var finish = function () {
                 // operation chain ends
                 info.innerText = displayEqualities(equalities);
@@ -76,11 +79,7 @@ var loadMJPEG = function (file) {
                 return Promise.reject();
             };
 
-            var i = 0;
-            var time;
             var sequence = mjpeg.getForwardFrame(0).then(function (frame) {
-                if (!frame)
-                    return Promise.reject();
                 i = frame.index;
                 time = i / mjpeg.totalFrames * mjpeg.duration;
                 return getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
@@ -90,7 +89,11 @@ var loadMJPEG = function (file) {
 
             var asyncOperation = function () {
                 var _imageData;
-                return mjpeg.getForwardFrame(i + 1).then(function (frame) {
+                var next = Math.floor(i + 0.2 / mjpeg.frameInterval);
+                if (next >= mjpeg.totalFrames)
+                    return;
+
+                return mjpeg.getForwardFrame(next).then(function (frame) {
                     i = frame.index;
                     time = i / mjpeg.totalFrames * mjpeg.duration;
                     return getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
@@ -166,8 +169,11 @@ var displayEqualities = function (freezings) {
         }
 
         if (movedLastTime) {
-            if (last)
+            if (last) {
                 last.duration = parseFloat((last.end - last.start).toFixed(3));
+                if (last.duration < 0.5)
+                    continuousFreezing.pop();
+            }
             last = { start: parseFloat(freezing.watched.toFixed(3)), end: parseFloat(freezing.judged.toFixed(3)) };
             continuousFreezing.push(last);
         } else
