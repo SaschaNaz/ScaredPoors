@@ -115,16 +115,13 @@ var loadMJPEG = (file: Blob) => {
             var _imageData: ImageData;
             return mjpeg.getForwardFrame(i + 1)
                 .then<ImageData>((frame) => {
-                    if (!frame)
-                        return Promise.reject(); // finish this operation chain
-
                     i = frame.index;
                     time = i / mjpeg.totalFrames * mjpeg.duration;
                     return getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
-                }).then((imageData) => {
+                }, finish).then((imageData) => {
                     _imageData = imageData;
                     return equal(time, imageData);
-                }, finish).then((equality) => {
+                }).then((equality) => {
                     equalities.push({ watched: lastImageFrame[0].time, judged: equality.currentTime, isOccured: equality.isEqual });
                     lastImageFrame.push({ time: time, imageData: _imageData });
                     while (time - lastImageFrame[0].time > 0.25)

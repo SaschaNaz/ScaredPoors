@@ -1,4 +1,4 @@
-﻿var MemoryBox = (function () {
+var MemoryBox = (function () {
     function MemoryBox() {
         this.canvas = document.createElement("canvas");
         this.image = document.createElement("img");
@@ -91,16 +91,13 @@ var loadMJPEG = function (file) {
             var asyncOperation = function () {
                 var _imageData;
                 return mjpeg.getForwardFrame(i + 1).then(function (frame) {
-                    if (!frame)
-                        return Promise.reject();
-
                     i = frame.index;
                     time = i / mjpeg.totalFrames * mjpeg.duration;
                     return getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
-                }).then(function (imageData) {
+                }, finish).then(function (imageData) {
                     _imageData = imageData;
                     return equal(time, imageData);
-                }, finish).then(function (equality) {
+                }).then(function (equality) {
                     equalities.push({ watched: lastImageFrame[0].time, judged: equality.currentTime, isOccured: equality.isEqual });
                     lastImageFrame.push({ time: time, imageData: _imageData });
                     while (time - lastImageFrame[0].time > 0.25)
