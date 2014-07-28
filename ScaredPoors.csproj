@@ -21,17 +21,20 @@
     <Content Include="default.htm" />
     <Content Include="submodules\promise\Promise.js" />
     <Content Include="submodules\streams\streams.js" />
-    <Content Include="web.config" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="app.ts" />
     <TypeScriptCompile Include="scaredpoors.ts" />
     <TypeScriptCompile Include="imagediffworker.ts" />
     <TypeScriptCompile Include="submodules\es6-promises.d.ts" />
+    <TypeScriptCompile Include="submodules\mjpegdecoder\mjpegdecoder.d.ts" />
     <TypeScriptCompile Include="submodules\streams\streams.d.ts" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="submodules\streams\streams.js.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="web.config" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
     </None>

@@ -1,4 +1,4 @@
-var MemoryBox = (function () {
+﻿var MemoryBox = (function () {
     function MemoryBox() {
         this.canvas = document.createElement("canvas");
         this.image = document.createElement("img");
@@ -13,15 +13,24 @@ var loadedArrayBuffer;
 var memoryBox = new MemoryBox();
 var equalities = [];
 
+if (!window.setImmediate) {
+    window.setImmediate = function (expression) {
+        var args = [];
+        for (var _i = 0; _i < (arguments.length - 1); _i++) {
+            args[_i] = arguments[_i + 1];
+        }
+        return window.setTimeout.apply(window, [expression, 0].concat(args));
+    };
+}
+
 var imageDiffWorker = new Worker("imagediffworker.js");
 
-//window.addEventListener("DOMContentLoaded", () => {
-//    analyzer.startAnalysis(target, postOperation);
-//});
 var getImageData = function (file, width, height, crop) {
-    memoryBox.image.src = URL.createObjectURL(file);
+    memoryBox.image.src = URL.createObjectURL(file, { oneTimeOnly: true });
     if (memoryBox.image.naturalWidth !== width || memoryBox.image.naturalHeight !== height)
         console.warn(["Different image size is detected.", memoryBox.image.naturalWidth, width, memoryBox.image.naturalHeight, height].join(" "));
+    else
+        console.log(["Correct image size is detected.", memoryBox.image.naturalWidth, width, memoryBox.image.naturalHeight, height].join(" "));
     memoryBox.canvasContext.drawImage(memoryBox.image, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
     return memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height);
 };
@@ -30,90 +39,99 @@ var loadVideo = function (file) {
     target.src = URL.createObjectURL(file);
 };
 
-//var mjpegWorker = new Worker("mjpegworker.js");
-//mjpegWorker.addEventListener("message", (e: MessageEvent) => {
-//    var data: MJPEGData = e.data.mjpegData;
-//    //var array = new Uint8Array(loadedArrayBuffer);
-//    var frameDataList = data.frameDataList;
-//    var sendFrame = () => {
-//        sendingIndex += data.frameRate;
-//        if (frameDataList.length <= sendingIndex)
-//            return;
-//        var sendingFrame = frameDataList[sendingIndex];
-//        postOperation(sendingFrame.currentTime, getImageDataFromArray(sendingFrame.jpegArrayData));
-//    };
-//    var sendingIndex = -data.frameRate;
-//    imageDiffWorker.addEventListener("message", (eq: MessageEvent) => {
-//        if (eq.data.type == "equality") {
-//            sendFrame();
-//        }
-//    });
-//    sendFrame();
-//    sendFrame();//send two frames
-//});
 var loadMJPEG = function (file) {
-    //var reader = new FileReader();
-    //reader.onload = (e) => {
-    //    loadedArrayBuffer = <ArrayBuffer>e.target.result;
-    //(new MJPEGReader()).read(file, 24, (frames) => {
-    //    frames.forEach((frame) => {
-    //        postOperation(frame.currentTime, getImageDataFromArray(frame.jpegBase64));
-    //    });
-    //});
-    //mjpegWorker.postMessage({ type: "mjpeg", file: file /*arraybuffer: loadedArrayBuffer*/, frameRate: 100 });
-    //};
-    //reader.readAsArrayBuffer(file);
     var crop = {
         offsetX: 140,
         offsetY: 271,
         width: 354,
         height: 155
     };
-    MJPEGReader.read(file, function (mjpeg) {
-        memoryBox.canvas.width = crop.width;
-        memoryBox.canvas.height = crop.height;
+    MJPEGReader.read(file).then(function (mjpeg) {
+        return new Promise(function (resolve, reject) {
+            memoryBox.canvas.width = crop.width;
+            memoryBox.canvas.height = crop.height;
 
-        var i = 0;
-         {
-            var frame = mjpeg.getForwardFrame(i);
-            if (!frame)
-                return;
-            i = frame.index;
-            var time = i / mjpeg.totalFrames * mjpeg.duration;
-            var imageData = getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
-            lastImageFrame.push({ time: time, imageData: imageData });
-        }
-
-        var operateAsync = function () {
-            var frame = mjpeg.getForwardFrame(i + 1);
-            if (!frame) {
-                //console.log(equalities.map(function (equality) { return JSON.stringify(equality) }).join("\r\n"));
-                info.innerText = displayEqualities(equalities);
-                return;
-            }
-            i = frame.index;
-            var time = i / mjpeg.totalFrames * mjpeg.duration;
-            var imageData = getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
-            equalAsync(time, imageData, function (equality) {
-                equalities.push({ watched: lastImageFrame[0].time, judged: equality.currentTime, isOccured: equality.isEqual });
+            var i = 0;
+            var sequence = mjpeg.getForwardFrame(0).then(function (frame) {
+                if (!frame)
+                    return Promise.reject();
+                i = frame.index;
+                var time = i / mjpeg.totalFrames * mjpeg.duration;
+                var imageData = getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
                 lastImageFrame.push({ time: time, imageData: imageData });
-                while (time - lastImageFrame[0].time > 0.25)
-                    lastImageFrame.shift();
-                window.setImmediate(operateAsync);
             });
-        };
-        operateAsync();
+
+            var asyncOperation = function () {
+                var time;
+                var imageData;
+                return mjpeg.getForwardFrame(i + 1).then(function (frame) {
+                    if (!frame)
+                        return Promise.reject();
+
+                    i = frame.index;
+                    time = i / mjpeg.totalFrames * mjpeg.duration;
+                    imageData = getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
+                    return equal(time, imageData);
+                }).then(function (equality) {
+                    equalities.push({ watched: lastImageFrame[0].time, judged: equality.currentTime, isOccured: equality.isEqual });
+                    lastImageFrame.push({ time: time, imageData: imageData });
+                    while (time - lastImageFrame[0].time > 0.25)
+                        lastImageFrame.shift();
+                    sequence = sequence.then(asyncOperation); // chain operation
+                }, function () {
+                    // operation chain ends
+                    info.innerText = displayEqualities(equalities);
+                    resolve(undefined);
+                });
+            };
+            sequence.then(asyncOperation);
+        });
     });
+    //MJPEGReader.read(file, (mjpeg) => {
+    //    memoryBox.canvas.width = crop.width;
+    //    memoryBox.canvas.height = crop.height;
+    //    var i = 0;
+    //    {
+    //        var frame = mjpeg.getForwardFrame(i);
+    //        if (!frame)
+    //            return;
+    //        i = frame.index;
+    //        var time = i / mjpeg.totalFrames * mjpeg.duration;
+    //        var imageData = getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
+    //        lastImageFrame.push({ time: time, imageData: imageData });
+    //    }
+    //    var operateAsync = () => {
+    //        var frame = mjpeg.getForwardFrame(i + 1);
+    //        if (!frame) {
+    //            //console.log(equalities.map(function (equality) { return JSON.stringify(equality) }).join("\r\n"));
+    //            info.innerText = displayEqualities(equalities);
+    //            return;
+    //        }
+    //        i = frame.index;
+    //        var time = i / mjpeg.totalFrames * mjpeg.duration;
+    //        var imageData = getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
+    //        equalAsync(time, imageData, (equality) => {
+    //            equalities.push({ watched: lastImageFrame[0].time, judged: equality.currentTime, isOccured: equality.isEqual });
+    //            lastImageFrame.push({ time: time, imageData: imageData });
+    //            while (time - lastImageFrame[0].time > 0.25)
+    //                lastImageFrame.shift();
+    //            window.setImmediate(operateAsync);
+    //        });
+    //    }
+    //    operateAsync();
+    //});
 };
 
-var equalAsync = function (currentTime, imageData, onend) {
-    var callback = function (e) {
-        imageDiffWorker.removeEventListener("message", callback);
-        if (e.data.type == "equality")
-            onend(e.data);
-    };
-    imageDiffWorker.addEventListener("message", callback);
-    imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageFrame[0].imageData, data2: imageData, colorTolerance: 100, pixelTolerance: 100 });
+var equal = function (currentTime, imageData) {
+    return new Promise(function (resolve, reject) {
+        var callback = function (e) {
+            imageDiffWorker.removeEventListener("message", callback);
+            if (e.data.type == "equality")
+                resolve(e.data);
+        };
+        imageDiffWorker.addEventListener("message", callback);
+        imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageFrame[0].imageData, data2: imageData, colorTolerance: 100, pixelTolerance: 100 });
+    });
 };
 
 var displayEqualities = function (freezings) {
