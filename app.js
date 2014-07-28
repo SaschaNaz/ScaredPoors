@@ -27,12 +27,30 @@ var imageDiffWorker = new Worker("imagediffworker.js");
 
 var getImageData = function (file, width, height, crop) {
     memoryBox.image.src = URL.createObjectURL(file, { oneTimeOnly: true });
-    if (memoryBox.image.naturalWidth !== width || memoryBox.image.naturalHeight !== height)
-        console.warn(["Different image size is detected.", memoryBox.image.naturalWidth, width, memoryBox.image.naturalHeight, height].join(" "));
-    else
-        console.log(["Correct image size is detected.", memoryBox.image.naturalWidth, width, memoryBox.image.naturalHeight, height].join(" "));
-    memoryBox.canvasContext.drawImage(memoryBox.image, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
-    return memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height);
+
+    return new Promise(function (resolve, reject) {
+        var sequence = promiseImmediate();
+        var asyncOperation = function () {
+            if (!memoryBox.image.complete) {
+                sequence.then(promiseImmediate).then(asyncOperation);
+                return;
+            }
+
+            if (memoryBox.image.naturalWidth !== width || memoryBox.image.naturalHeight !== height)
+                console.warn(["Different image size is detected.", memoryBox.image.naturalWidth, width, memoryBox.image.naturalHeight, height].join(" "));
+            memoryBox.canvasContext.drawImage(memoryBox.image, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
+            resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
+        };
+        sequence.then(asyncOperation);
+    });
+};
+
+var promiseImmediate = function () {
+    return new Promise(function (resolve, reject) {
+        window.setImmediate(function () {
+            resolve(undefined);
+        });
+    });
 };
 
 var loadVideo = function (file) {
@@ -41,47 +59,53 @@ var loadVideo = function (file) {
 
 var loadMJPEG = function (file) {
     var crop = {
-        offsetX: 140,
-        offsetY: 271,
-        width: 354,
-        height: 155
+        offsetX: 139,
+        offsetY: 236,
+        width: 309,
+        height: 133
     };
     MJPEGReader.read(file).then(function (mjpeg) {
         return new Promise(function (resolve, reject) {
             memoryBox.canvas.width = crop.width;
             memoryBox.canvas.height = crop.height;
 
+            var finish = function () {
+                // operation chain ends
+                info.innerText = displayEqualities(equalities);
+                resolve(undefined);
+                return Promise.reject();
+            };
+
             var i = 0;
+            var time;
             var sequence = mjpeg.getForwardFrame(0).then(function (frame) {
                 if (!frame)
                     return Promise.reject();
                 i = frame.index;
-                var time = i / mjpeg.totalFrames * mjpeg.duration;
-                var imageData = getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
+                time = i / mjpeg.totalFrames * mjpeg.duration;
+                return getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
+            }).then(function (imageData) {
                 lastImageFrame.push({ time: time, imageData: imageData });
-            });
+            }, finish);
 
             var asyncOperation = function () {
-                var time;
-                var imageData;
+                var _imageData;
                 return mjpeg.getForwardFrame(i + 1).then(function (frame) {
                     if (!frame)
                         return Promise.reject();
 
                     i = frame.index;
                     time = i / mjpeg.totalFrames * mjpeg.duration;
-                    imageData = getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
+                    return getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
+                }).then(function (imageData) {
+                    _imageData = imageData;
                     return equal(time, imageData);
-                }).then(function (equality) {
+                }, finish).then(function (equality) {
                     equalities.push({ watched: lastImageFrame[0].time, judged: equality.currentTime, isOccured: equality.isEqual });
-                    lastImageFrame.push({ time: time, imageData: imageData });
+                    lastImageFrame.push({ time: time, imageData: _imageData });
                     while (time - lastImageFrame[0].time > 0.25)
                         lastImageFrame.shift();
                     sequence = sequence.then(asyncOperation); // chain operation
-                }, function () {
-                    // operation chain ends
-                    info.innerText = displayEqualities(equalities);
-                    resolve(undefined);
                 });
             };
             sequence.then(asyncOperation);
