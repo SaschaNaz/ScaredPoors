@@ -159,7 +159,7 @@ var displayEqualities = (freezings: Occurrence[]) => {
         if (movedLastTime) {
             if (last) {
                 last.duration = parseFloat((last.end - last.start).toFixed(3));
-                if (last.duration < 1)
+                if (last.duration < 1.5)
                     continuousFreezing.pop();
             }
             last = { start: parseFloat(freezing.watched.toFixed(3)), end: parseFloat(freezing.judged.toFixed(3)) };
