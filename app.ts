@@ -77,6 +77,12 @@ var promiseImmediate = () =>
     });
 
 
+/*
+TODO
+fix loadMJPEG to use VideoPlayable interface
+no getFrame in HTMLVideoElement, should make equivalent method (with canvas)
+*/
+
 var loadVideo = (file: Blob) => {
     if (file.type === "video/avi") {
         var player = new MJPEGPlayer();
