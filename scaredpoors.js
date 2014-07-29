@@ -5,13 +5,14 @@ var ScaredPoors = (function () {
         this.internalCanvasContext = this.internalCanvas.getContext("2d");
     }
     ScaredPoors.prototype.startAnalysis = function (video, onanalyze) {
+        var _this = this;
         this.loadedVideo = video;
         this.onanalyze = onanalyze;
         this.loadedVideo.addEventListener("play", function () {
-            this.internalCanvas.width = video.videoWidth;
-            this.internalCanvas.height = video.videoHeight;
-            this.callback();
-        }.bind(this));
+            _this.internalCanvas.width = video.videoWidth;
+            _this.internalCanvas.height = video.videoHeight;
+            _this.callback();
+        });
     };
     ScaredPoors.prototype.stopAnalysis = function () {
         this.loadedVideo.removeEventListener("play", this.callback.bind(this));

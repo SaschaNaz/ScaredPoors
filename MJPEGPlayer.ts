@@ -40,31 +40,43 @@
             this.element.src = URL.createObjectURL(frame, { oneTimeOnly: true });
         }, function () { });
     }
+    private _waitToPlay() {
+        return new Promise<void>((resolve, reject) => {
+            var next = () => {
+                if (this._src)
+                    return resolve(undefined);
+                if (this._stopToken)
+                    return reject(new Error("Play cancelled"));
+
+                promiseImmediate().then(next);
+            };
+            next();
+        });
+    }
     play() {
-        var referenceTime = Date.now() / 1000;
-        var referenceVideoTime = this._currentVideoTime;
+        this._waitToPlay().then(() => {
+            var referenceTime = Date.now() / 1000;
+            var referenceVideoTime = this._currentVideoTime;
 
-        var sequence = Promise.resolve();
-        var playNext = () => {
-            if (this._stopToken) {
-                this._stopToken = false;
-                return;
-            }
+            var next = () => {
+                if (this._stopToken) {
+                    this._stopToken = false;
+                    return;
+                }
 
-            var targetTime = referenceVideoTime + Date.now() / 1000 - referenceTime;
-            if (targetTime - this._currentVideoTime > 0.1) {
-                referenceTime = Date.now() / 1000;
-                referenceVideoTime = this._currentVideoTime;
-                targetTime = referenceVideoTime + 0.1;
-            }
-            if (targetTime < this._src.duration) {
-                sequence = sequence.then(promiseImmediate).then(playNext);
-                return this._show(targetTime);
-            }
-            else
-                return this._show(this._src.duration);
-        };
-        sequence.then(promiseImmediate).then(playNext);
+                var targetTime = referenceVideoTime + Date.now() / 1000 - referenceTime;
+                if (targetTime - this._currentVideoTime > 0.1) { // is there too much delay?
+                    referenceTime = Date.now() / 1000; // reset the reference to the current time
+                    referenceVideoTime = this._currentVideoTime;
+                    targetTime = referenceVideoTime + 0.1; // limit the delay to 0.1 s (100 ms)
+                }
+                if (targetTime < this._src.duration)
+                    this._show(targetTime).then(promiseImmediate).then(next);
+                else
+                    this._show(this._src.duration);
+            };
+            promiseImmediate().then(next);
+        });
     }
     pause() {
         this._stopToken = true;

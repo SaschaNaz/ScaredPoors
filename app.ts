@@ -7,7 +7,9 @@ class MemoryBox {
     }
 }
 
-declare var target: HTMLVideoElement;
+declare var videoElement: HTMLVideoElement;
+declare var presenter: HTMLDivElement;
+var videoPlayable: VideoPlayable;
 declare var info: HTMLSpanElement;
 var analyzer = new ScaredPoors();
 var lastImageFrame: FrameData;
@@ -68,7 +70,7 @@ var getImageData = (file: Blob, width: number, height: number, crop: ImageCropIn
 };
 
 var promiseImmediate = () =>
-    new Promise(function (resolve, reject) {
+    new Promise<void>(function (resolve, reject) {
         window.setImmediate(function () {
             resolve(undefined);
         });
@@ -76,7 +78,16 @@ var promiseImmediate = () =>
 
 
 var loadVideo = (file: Blob) => {
-    target.src = URL.createObjectURL(file);
+    if (file.type === "video/avi") {
+        var player = new MJPEGPlayer();
+        presenter.appendChild(player.element);
+        videoPlayable = player;
+    }
+    else
+        videoPlayable = videoElement;
+
+    videoPlayable.src = URL.createObjectURL(file);
+    videoPlayable.play();
 };
 
 var loadMJPEG = (file: Blob) => {

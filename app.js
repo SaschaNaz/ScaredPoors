@@ -7,6 +7,8 @@ var MemoryBox = (function () {
     return MemoryBox;
 })();
 
+var videoPlayable;
+
 var analyzer = new ScaredPoors();
 var lastImageFrame;
 var loadedArrayBuffer;
@@ -54,7 +56,15 @@ var promiseImmediate = function () {
 };
 
 var loadVideo = function (file) {
-    target.src = URL.createObjectURL(file);
+    if (file.type === "video/avi") {
+        var player = new MJPEGPlayer();
+        presenter.appendChild(player.element);
+        videoPlayable = player;
+    } else
+        videoPlayable = videoElement;
+
+    videoPlayable.src = URL.createObjectURL(file);
+    videoPlayable.play();
 };
 
 var loadMJPEG = function (file) {

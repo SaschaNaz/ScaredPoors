@@ -51,31 +51,45 @@
         }, function () {
         });
     };
+    MJPEGPlayer.prototype._waitToPlay = function () {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            var next = function () {
+                if (_this._src)
+                    return resolve(undefined);
+                if (_this._stopToken)
+                    return reject(new Error("Play cancelled"));
+
+                promiseImmediate().then(next);
+            };
+            next();
+        });
+    };
     MJPEGPlayer.prototype.play = function () {
         var _this = this;
-        var referenceTime = Date.now() / 1000;
-        var referenceVideoTime = this._currentVideoTime;
+        this._waitToPlay().then(function () {
+            var referenceTime = Date.now() / 1000;
+            var referenceVideoTime = _this._currentVideoTime;
 
-        var sequence = Promise.resolve();
-        var playNext = function () {
-            if (_this._stopToken) {
-                _this._stopToken = false;
-                return;
-            }
+            var next = function () {
+                if (_this._stopToken) {
+                    _this._stopToken = false;
+                    return;
+                }
 
-            var targetTime = referenceVideoTime + Date.now() / 1000 - referenceTime;
-            if (targetTime - _this._currentVideoTime > 0.1) {
-                referenceTime = Date.now() / 1000;
-                referenceVideoTime = _this._currentVideoTime;
-                targetTime = referenceVideoTime + 0.1;
-            }
-            if (targetTime < _this._src.duration) {
-                sequence = sequence.then(promiseImmediate).then(playNext);
-                return _this._show(targetTime);
-            } else
-                return _this._show(_this._src.duration);
-        };
-        sequence.then(promiseImmediate).then(playNext);
+                var targetTime = referenceVideoTime + Date.now() / 1000 - referenceTime;
+                if (targetTime - _this._currentVideoTime > 0.1) {
+                    referenceTime = Date.now() / 1000; // reset the reference to the current time
+                    referenceVideoTime = _this._currentVideoTime;
+                    targetTime = referenceVideoTime + 0.1; // limit the delay to 0.1 s (100 ms)
+                }
+                if (targetTime < _this._src.duration)
+                    _this._show(targetTime).then(promiseImmediate).then(next);
+                else
+                    _this._show(_this._src.duration);
+            };
+            promiseImmediate().then(next);
+        });
     };
     MJPEGPlayer.prototype.pause = function () {
         this._stopToken = true;
