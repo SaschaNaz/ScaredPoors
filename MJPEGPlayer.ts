@@ -1,12 +1,20 @@
 ﻿class MJPEGPlayer implements VideoPlayable {
-    private _src: MJPEGVideo;
+    private _src: MJPEGVideo = null;
     private _srcUrl: string;
-    element = document.createElement("img");
+    private _element: HTMLImageElement;
+    get element() {
+        if (!this._element) {
+            this._element = document.createElement("img");
+            (<any>this._element).player = this;
+        }
+        return this._element;
+    }
     get src() {
         return this._srcUrl; // _src.blob is not immediately available after setting src property
     }
     set src(url: string) {
         this.pause();
+        this._src = null;
         this._srcUrl = url;
             
         if (url.length > 0)

@@ -1,10 +1,21 @@
 ﻿var MJPEGPlayer = (function () {
     function MJPEGPlayer() {
-        this.element = document.createElement("img");
+        this._src = null;
         /** Stops playing when set to true, automatically returning to false */
         this._playSessionToken = null;
         this._currentVideoTime = -1;
     }
+    Object.defineProperty(MJPEGPlayer.prototype, "element", {
+        get: function () {
+            if (!this._element) {
+                this._element = document.createElement("img");
+                this._element.player = this;
+            }
+            return this._element;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(MJPEGPlayer.prototype, "src", {
         get: function () {
             return this._srcUrl;
@@ -12,6 +23,7 @@
         set: function (url) {
             var _this = this;
             this.pause();
+            this._src = null;
             this._srcUrl = url;
 
             if (url.length > 0)
