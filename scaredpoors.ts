@@ -14,11 +14,11 @@ class ScaredPoors {
     startAnalysis(video: HTMLVideoElement, onanalyze: (currentTime: number, imageData: ImageData) => any) {
         this.loadedVideo = video;
         this.onanalyze = onanalyze;
-        this.loadedVideo.addEventListener("play", function () {
+        this.loadedVideo.addEventListener("play", () => {
             this.internalCanvas.width = video.videoWidth;
             this.internalCanvas.height = video.videoHeight;
             this.callback();
-        }.bind(this));
+        });
     }
     stopAnalysis() {
         this.loadedVideo.removeEventListener("play", this.callback.bind(this));

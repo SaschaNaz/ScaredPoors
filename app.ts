@@ -9,7 +9,6 @@ class MemoryBox {
 
 declare var target: HTMLVideoElement;
 declare var info: HTMLSpanElement;
-declare var imagediff: any;
 var analyzer = new ScaredPoors();
 var lastImageFrame: FrameData;
 var loadedArrayBuffer: ArrayBuffer;
