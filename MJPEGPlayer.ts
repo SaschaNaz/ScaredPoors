@@ -22,6 +22,8 @@
                 .then((blob) => MJPEGReader.read(blob))
                 .then((video) => {
                     this._src = video;
+                    if (this.onload)
+                        this.onload(this._createEvent());
                 });
         else {
             this._currentVideoTime = -1; // blocks further rendering
@@ -40,6 +42,8 @@
         });
     }
 
+    onload: (e: PlayableEvent) => any;
+
     /** Stops playing when set to true, automatically returning to false */
     private _playSessionToken: { stop: boolean; } = null;
     private _currentVideoTime = -1;
@@ -47,7 +51,7 @@
         return Math.max(this._currentVideoTime, 0);
     }
     set currentTime(time: number) {
-        this._show(time);
+        this._waitToPlay().then(() => this._show(time));
     }
 
     private _show(time: number) {
@@ -58,11 +62,12 @@
         }, function () { });
     }
     private _waitToPlay() {
+        var source = this._srcUrl;
         return new Promise<void>((resolve, reject) => {
             var next = () => {
                 if (this._src)
                     return resolve(undefined);
-                if (this._playSessionToken.stop)
+                if (source !== this._srcUrl) // source is changed
                     return reject(new Error("Play cancelled"));
 
                 promiseImmediate().then(next);
@@ -114,6 +119,21 @@
         else
             return 0;
     }
+
+    private _createEvent() {
+        return <PlayableEvent>{
+            bubbles: false,
+            cancelable: false,
+            cancelBubble: false,
+            currentTarget: this,
+            defaultPrevented: false,
+            eventPhase: 2,
+            isTrusted: true,
+            target: this,
+            timeStamp: Date.now(),
+            type: "load"
+        }
+    }
 }
 
 interface VideoPlayable {
@@ -124,4 +144,16 @@ interface VideoPlayable {
 
     videoWidth: number;
     videoHeight: number;
+}
+interface PlayableEvent {
+    bubbles: boolean;
+    cancelable: boolean;
+    cancelBubble: boolean;
+    currentTarget: VideoPlayable;
+    defaultPrevented: boolean;
+    eventPhase: number;
+    isTrusted: boolean;
+    target: VideoPlayable;
+    timeStamp: number;
+    type: string;
 }

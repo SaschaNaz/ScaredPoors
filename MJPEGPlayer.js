@@ -31,6 +31,8 @@
                     return MJPEGReader.read(blob);
                 }).then(function (video) {
                     _this._src = video;
+                    if (_this.onload)
+                        _this.onload(_this._createEvent());
                 });
             else {
                 this._currentVideoTime = -1; // blocks further rendering
@@ -57,7 +59,10 @@
             return Math.max(this._currentVideoTime, 0);
         },
         set: function (time) {
-            this._show(time);
+            var _this = this;
+            this._waitToPlay().then(function () {
+                return _this._show(time);
+            });
         },
         enumerable: true,
         configurable: true
@@ -74,11 +79,12 @@
     };
     MJPEGPlayer.prototype._waitToPlay = function () {
         var _this = this;
+        var source = this._srcUrl;
         return new Promise(function (resolve, reject) {
             var next = function () {
                 if (_this._src)
                     return resolve(undefined);
-                if (_this._playSessionToken.stop)
+                if (source !== _this._srcUrl)
                     return reject(new Error("Play cancelled"));
 
                 promiseImmediate().then(next);
@@ -139,6 +145,21 @@
         enumerable: true,
         configurable: true
     });
+
+    MJPEGPlayer.prototype._createEvent = function () {
+        return {
+            bubbles: false,
+            cancelable: false,
+            cancelBubble: false,
+            currentTarget: this,
+            defaultPrevented: false,
+            eventPhase: 2,
+            isTrusted: true,
+            target: this,
+            timeStamp: Date.now(),
+            type: "load"
+        };
+    };
     return MJPEGPlayer;
 })();
 //# sourceMappingURL=MJPEGPlayer.js.map
