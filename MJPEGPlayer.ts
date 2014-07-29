@@ -7,11 +7,18 @@
     }
     set src(url: string) {
         this._srcUrl = url;
-        this._getBlobFromUrl(url)
-            .then((blob) => MJPEGReader.read(blob))
-            .then((video) => {
-                this._src = video;
-            });
+        if (url.length > 0) 
+            this._getBlobFromUrl(url)
+                .then((blob) => MJPEGReader.read(blob))
+                .then((video) => {
+                    this._src = video;
+                });
+        else {
+            if (!this._stopToken)
+                this._stopToken = true;
+            this._currentVideoTime = -1; // blocks further rendering
+            this.element.src = ""; // clear image element
+        }
     }
     private _getBlobFromUrl(url: string) {
         return new Promise<Blob>((resolve, reject) => {
@@ -25,10 +32,11 @@
         });
     }
 
+    /** Stops playing when set to true, automatically returning to false */
     private _stopToken = false;
-    private _currentVideoTime = 0;
+    private _currentVideoTime = -1;
     get currentTime() {
-        return this._currentVideoTime;
+        return Math.max(this._currentVideoTime, 0);
     }
     set currentTime(time: number) {
         this._show(time);
@@ -37,7 +45,8 @@
     private _show(time: number) {
         this._currentVideoTime = time;
         return this._src.getFrameByTime(time).then((frame) => {
-            this.element.src = URL.createObjectURL(frame, { oneTimeOnly: true });
+            if (this._currentVideoTime == time) // show it only when no other frames are requested after this one
+                this.element.src = URL.createObjectURL(frame, { oneTimeOnly: true });
         }, function () { });
     }
     private _waitToPlay() {

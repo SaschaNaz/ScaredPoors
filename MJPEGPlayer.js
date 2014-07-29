@@ -1,8 +1,9 @@
 ﻿var MJPEGPlayer = (function () {
     function MJPEGPlayer() {
         this.element = document.createElement("img");
+        /** Stops playing when set to true, automatically returning to false */
         this._stopToken = false;
-        this._currentVideoTime = 0;
+        this._currentVideoTime = -1;
     }
     Object.defineProperty(MJPEGPlayer.prototype, "src", {
         get: function () {
@@ -11,11 +12,18 @@
         set: function (url) {
             var _this = this;
             this._srcUrl = url;
-            this._getBlobFromUrl(url).then(function (blob) {
-                return MJPEGReader.read(blob);
-            }).then(function (video) {
-                _this._src = video;
-            });
+            if (url.length > 0)
+                this._getBlobFromUrl(url).then(function (blob) {
+                    return MJPEGReader.read(blob);
+                }).then(function (video) {
+                    _this._src = video;
+                });
+            else {
+                if (!this._stopToken)
+                    this._stopToken = true;
+                this._currentVideoTime = -1; // blocks further rendering
+                this.element.src = ""; // clear image element
+            }
         },
         enumerable: true,
         configurable: true
@@ -34,7 +42,7 @@
 
     Object.defineProperty(MJPEGPlayer.prototype, "currentTime", {
         get: function () {
-            return this._currentVideoTime;
+            return Math.max(this._currentVideoTime, 0);
         },
         set: function (time) {
             this._show(time);
@@ -47,7 +55,8 @@
         var _this = this;
         this._currentVideoTime = time;
         return this._src.getFrameByTime(time).then(function (frame) {
-            _this.element.src = URL.createObjectURL(frame, { oneTimeOnly: true });
+            if (_this._currentVideoTime == time)
+                _this.element.src = URL.createObjectURL(frame, { oneTimeOnly: true });
         }, function () {
         });
     };
