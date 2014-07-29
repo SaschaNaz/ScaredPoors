@@ -6,16 +6,16 @@
         return this._srcUrl; // _src.blob is not immediately available after setting src property
     }
     set src(url: string) {
+        this.pause();
         this._srcUrl = url;
-        if (url.length > 0) 
+            
+        if (url.length > 0)
             this._getBlobFromUrl(url)
                 .then((blob) => MJPEGReader.read(blob))
                 .then((video) => {
                     this._src = video;
                 });
         else {
-            if (!this._stopToken)
-                this._stopToken = true;
             this._currentVideoTime = -1; // blocks further rendering
             this.element.src = ""; // clear image element
         }
@@ -33,7 +33,7 @@
     }
 
     /** Stops playing when set to true, automatically returning to false */
-    private _stopToken = false;
+    private _playSessionToken: { stop: boolean; } = null;
     private _currentVideoTime = -1;
     get currentTime() {
         return Math.max(this._currentVideoTime, 0);
@@ -54,7 +54,7 @@
             var next = () => {
                 if (this._src)
                     return resolve(undefined);
-                if (this._stopToken)
+                if (this._playSessionToken.stop)
                     return reject(new Error("Play cancelled"));
 
                 promiseImmediate().then(next);
@@ -63,15 +63,15 @@
         });
     }
     play() {
+        var token = this._playSessionToken = { stop: false };
+
         this._waitToPlay().then(() => {
             var referenceTime = Date.now() / 1000;
             var referenceVideoTime = this._currentVideoTime;
 
             var next = () => {
-                if (this._stopToken) {
-                    this._stopToken = false;
+                if (token.stop)
                     return;
-                }
 
                 var targetTime = referenceVideoTime + Date.now() / 1000 - referenceTime;
                 if (targetTime - this._currentVideoTime > 0.1) { // is there too much delay?
@@ -88,7 +88,10 @@
         });
     }
     pause() {
-        this._stopToken = true;
+        if (this._playSessionToken) {
+            this._playSessionToken.stop = true;
+            this._playSessionToken = null;
+        }
     }
 
     get videoWidth() {

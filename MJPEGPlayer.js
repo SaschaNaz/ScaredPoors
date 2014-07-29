@@ -2,7 +2,7 @@
     function MJPEGPlayer() {
         this.element = document.createElement("img");
         /** Stops playing when set to true, automatically returning to false */
-        this._stopToken = false;
+        this._playSessionToken = null;
         this._currentVideoTime = -1;
     }
     Object.defineProperty(MJPEGPlayer.prototype, "src", {
@@ -11,7 +11,9 @@
         },
         set: function (url) {
             var _this = this;
+            this.pause();
             this._srcUrl = url;
+
             if (url.length > 0)
                 this._getBlobFromUrl(url).then(function (blob) {
                     return MJPEGReader.read(blob);
@@ -19,8 +21,6 @@
                     _this._src = video;
                 });
             else {
-                if (!this._stopToken)
-                    this._stopToken = true;
                 this._currentVideoTime = -1; // blocks further rendering
                 this.element.src = ""; // clear image element
             }
@@ -66,7 +66,7 @@
             var next = function () {
                 if (_this._src)
                     return resolve(undefined);
-                if (_this._stopToken)
+                if (_this._playSessionToken.stop)
                     return reject(new Error("Play cancelled"));
 
                 promiseImmediate().then(next);
@@ -76,15 +76,15 @@
     };
     MJPEGPlayer.prototype.play = function () {
         var _this = this;
+        var token = this._playSessionToken = { stop: false };
+
         this._waitToPlay().then(function () {
             var referenceTime = Date.now() / 1000;
             var referenceVideoTime = _this._currentVideoTime;
 
             var next = function () {
-                if (_this._stopToken) {
-                    _this._stopToken = false;
+                if (token.stop)
                     return;
-                }
 
                 var targetTime = referenceVideoTime + Date.now() / 1000 - referenceTime;
                 if (targetTime - _this._currentVideoTime > 0.1) {
@@ -101,7 +101,10 @@
         });
     };
     MJPEGPlayer.prototype.pause = function () {
-        this._stopToken = true;
+        if (this._playSessionToken) {
+            this._playSessionToken.stop = true;
+            this._playSessionToken = null;
+        }
     };
 
     Object.defineProperty(MJPEGPlayer.prototype, "videoWidth", {
