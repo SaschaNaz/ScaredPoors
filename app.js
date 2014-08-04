@@ -142,8 +142,15 @@ var startAnalyze = function () {
 };
 
 var getFrame = function (time) {
-    videoControl.onseeked = function () {
-    };
+    return new Promise(function (resolve, reject) {
+        videoControl.onseeked = function () {
+            if (videoControl === videoPresenter) {
+                //draw video
+            } else {
+                //draw image, as getImageData does
+            }
+        };
+    });
 };
 
 var equal = function (currentTime, imageData) {

@@ -166,9 +166,16 @@ var startAnalyze = () => {
 };
 
 var getFrame = (time: number) => {
-    videoControl.onseeked = () => {
-    };
-
+    return new Promise<void>((resolve, reject) => {
+        videoControl.onseeked = () => {
+            if (videoControl === <any>videoPresenter) {
+                //draw video
+            }
+            else {
+                //draw image, as getImageData does
+            }
+        };
+    });
 }
 
 var equal = (currentTime: number, imageData: ImageData) => {

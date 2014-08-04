@@ -53,8 +53,8 @@
     }
     set currentTime(time: number) {
         this._waitToPlay()
+            .then(() => this._show(time))
             .then(() => {
-                this._show(time);
                 if (this.onseeked)
                     this.onseeked(this._createEvent());
             });

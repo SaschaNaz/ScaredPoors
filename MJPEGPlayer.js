@@ -61,7 +61,8 @@
         set: function (time) {
             var _this = this;
             this._waitToPlay().then(function () {
-                _this._show(time);
+                return _this._show(time);
+            }).then(function () {
                 if (_this.onseeked)
                     _this.onseeked(_this._createEvent());
             });
