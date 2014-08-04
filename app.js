@@ -7,6 +7,8 @@ var MemoryBox = (function () {
     return MemoryBox;
 })();
 
+var altVideoElement = null;
+
 var videoPlayable;
 
 var analyzer = new ScaredPoors();
@@ -61,10 +63,23 @@ fix loadMJPEG to use VideoPlayable interface
 no getFrame in HTMLVideoElement, should make equivalent method (with canvas)
 */
 var loadVideo = function (file) {
-    if (file.type === "video/avi") {
-        var player = new MJPEGPlayer();
-        presenter.appendChild(player.element);
-        videoPlayable = player;
+    if (videoPlayable)
+        videoPlayable.pause();
+    if (altVideoElement) {
+        videoPlayable.src = "";
+        document.removeChild(altVideoElement.player);
+        altVideoElement = null;
+    }
+
+    if (videoElement.canPlayType(file.type)) {
+        switch (file.type) {
+            case "video/avi":
+                var player = new MJPEGPlayer();
+                presenter.appendChild(player.element);
+                videoPlayable = player;
+                altVideoElement = player.element;
+                break;
+        }
     } else
         videoPlayable = videoElement;
 

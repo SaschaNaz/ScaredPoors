@@ -162,4 +162,4 @@
     };
     return MJPEGPlayer;
 })();
-//# sourceMappingURL=MJPEGPlayer.js.map
+//# sourceMappingURL=mjpegplayer.js.map

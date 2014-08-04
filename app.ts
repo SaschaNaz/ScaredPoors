@@ -8,6 +8,7 @@ class MemoryBox {
 }
 
 declare var videoElement: HTMLVideoElement;
+var altVideoElement: HTMLElement = null;
 declare var presenter: HTMLDivElement;
 var videoPlayable: VideoPlayable;
 declare var info: HTMLSpanElement;
@@ -70,8 +71,8 @@ var getImageData = (file: Blob, width: number, height: number, crop: ImageCropIn
 };
 
 var promiseImmediate = () =>
-    new Promise<void>(function (resolve, reject) {
-        window.setImmediate(function () {
+    new Promise<void>((resolve, reject) => {
+        window.setImmediate(() => {
             resolve(undefined);
         });
     });
@@ -84,14 +85,27 @@ no getFrame in HTMLVideoElement, should make equivalent method (with canvas)
 */
 
 var loadVideo = (file: Blob) => {
-    if (file.type === "video/avi") {
-        var player = new MJPEGPlayer();
-        presenter.appendChild(player.element);
-        videoPlayable = player;
+    if (videoPlayable)
+        videoPlayable.pause();
+    if (altVideoElement) {
+        videoPlayable.src = "";
+        document.removeChild((<any>altVideoElement).player);
+        altVideoElement = null;
     }
-    else
-        videoPlayable = videoElement;
 
+    if (videoElement.canPlayType(file.type)) {
+        switch (file.type) {
+            case "video/avi": 
+                var player = new MJPEGPlayer();
+                presenter.appendChild(player.element);
+                videoPlayable = player;
+                altVideoElement = player.element;
+                break;
+        }
+    }
+    else 
+        videoPlayable = videoElement;
+    
     videoPlayable.src = URL.createObjectURL(file);
     videoPlayable.play();
 };
