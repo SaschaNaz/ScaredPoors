@@ -7,9 +7,9 @@ var MemoryBox = (function () {
     return MemoryBox;
 })();
 
-var altVideoElement = null;
+var videoPresenter = null;
 
-var videoPlayable;
+var videoControl;
 
 var analyzer = new ScaredPoors();
 var lastImageFrame;
@@ -63,42 +63,42 @@ fix loadMJPEG to use VideoPlayable interface
 no getFrame in HTMLVideoElement, should make equivalent method (with canvas)
 */
 var loadVideo = function (file) {
-    if (videoPlayable)
-        videoPlayable.pause();
-    if (altVideoElement) {
-        videoPlayable.src = "";
-        document.removeChild(altVideoElement.player);
-        altVideoElement = null;
+    if (videoControl)
+        videoControl.pause();
+    if (videoControl !== videoPresenter) {
+        videoControl.src = "";
+        document.removeChild(videoPresenter.player);
+        videoPresenter = null;
     }
 
-    if (videoElement.canPlayType(file.type)) {
+    if (videoNativeElement.canPlayType(file.type)) {
         switch (file.type) {
             case "video/avi":
                 var player = new MJPEGPlayer();
                 presenter.appendChild(player.element);
-                videoPlayable = player;
-                altVideoElement = player.element;
+                videoControl = player;
+                videoPresenter = player.element;
                 break;
         }
     } else
-        videoPlayable = videoElement;
+        videoNativeElement = videoPresenter = videoNativeElement;
 
-    videoPlayable.src = URL.createObjectURL(file);
-    videoPlayable.play();
+    videoControl.src = URL.createObjectURL(file);
+    videoControl.play();
 };
 
-var loadMJPEG = function (file) {
+var startAnalyze = function () {
     var crop = {
         offsetX: 139,
         offsetY: 236,
         width: 309,
         height: 133
     };
+    memoryBox.canvas.width = crop.width;
+    memoryBox.canvas.height = crop.height;
+
     MJPEGReader.read(file).then(function (mjpeg) {
         return new Promise(function (resolve, reject) {
-            memoryBox.canvas.width = crop.width;
-            memoryBox.canvas.height = crop.height;
-
             var i = 0;
             var time;
 
@@ -139,6 +139,11 @@ var loadMJPEG = function (file) {
             sequence.then(asyncOperation);
         });
     });
+};
+
+var getFrame = function (time) {
+    videoControl.onseeked = function () {
+    };
 };
 
 var equal = function (currentTime, imageData) {

@@ -22,8 +22,8 @@
                 .then((blob) => MJPEGReader.read(blob))
                 .then((video) => {
                     this._src = video;
-                    if (this.onload)
-                        this.onload(this._createEvent());
+                    //if (this.onloadstart)
+                    //    this.onloadstart(this._createEvent());
                 });
         else {
             this._currentVideoTime = -1; // blocks further rendering
@@ -42,7 +42,8 @@
         });
     }
 
-    onload: (e: PlayableEvent) => any;
+    //onloadstart: (e: PlayableEvent) => any;
+    onseeked: (e: PlayableEvent) => any;
 
     /** Stops playing when set to true, automatically returning to false */
     private _playSessionToken: { stop: boolean; } = null;
@@ -51,7 +52,12 @@
         return Math.max(this._currentVideoTime, 0);
     }
     set currentTime(time: number) {
-        this._waitToPlay().then(() => this._show(time));
+        this._waitToPlay()
+            .then(() => {
+                this._show(time);
+                if (this.onseeked)
+                    this.onseeked(this._createEvent());
+            });
     }
 
     private _show(time: number) {
@@ -144,6 +150,8 @@ interface VideoPlayable {
 
     videoWidth: number;
     videoHeight: number;
+
+    onseeked: (e: PlayableEvent) => any;
 }
 interface PlayableEvent {
     bubbles: boolean;

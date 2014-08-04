@@ -31,8 +31,8 @@
                     return MJPEGReader.read(blob);
                 }).then(function (video) {
                     _this._src = video;
-                    if (_this.onload)
-                        _this.onload(_this._createEvent());
+                    //if (this.onloadstart)
+                    //    this.onloadstart(this._createEvent());
                 });
             else {
                 this._currentVideoTime = -1; // blocks further rendering
@@ -61,7 +61,9 @@
         set: function (time) {
             var _this = this;
             this._waitToPlay().then(function () {
-                return _this._show(time);
+                _this._show(time);
+                if (_this.onseeked)
+                    _this.onseeked(_this._createEvent());
             });
         },
         enumerable: true,

@@ -7,10 +7,11 @@ class MemoryBox {
     }
 }
 
-declare var videoElement: HTMLVideoElement;
-var altVideoElement: HTMLElement = null;
+declare var videoNativeElement: HTMLVideoElement;
+var videoPresenter: HTMLElement = null;
 declare var presenter: HTMLDivElement;
-var videoPlayable: VideoPlayable;
+var videoControl: VideoPlayable;
+
 declare var info: HTMLSpanElement;
 var analyzer = new ScaredPoors();
 var lastImageFrame: FrameData;
@@ -85,42 +86,42 @@ no getFrame in HTMLVideoElement, should make equivalent method (with canvas)
 */
 
 var loadVideo = (file: Blob) => {
-    if (videoPlayable)
-        videoPlayable.pause();
-    if (altVideoElement) {
-        videoPlayable.src = "";
-        document.removeChild((<any>altVideoElement).player);
-        altVideoElement = null;
+    if (videoControl)
+        videoControl.pause();
+    if (videoControl !== <any>videoPresenter) {
+        videoControl.src = "";
+        document.removeChild((<any>videoPresenter).player);
+        videoPresenter = null;
     }
 
-    if (videoElement.canPlayType(file.type)) {
+    if (videoNativeElement.canPlayType(file.type)) {
         switch (file.type) {
-            case "video/avi": 
+            case "video/avi":
                 var player = new MJPEGPlayer();
                 presenter.appendChild(player.element);
-                videoPlayable = player;
-                altVideoElement = player.element;
+                videoControl = player;
+                videoPresenter = player.element;
                 break;
         }
     }
-    else 
-        videoPlayable = videoElement;
+    else
+        videoNativeElement = videoPresenter = videoNativeElement;
     
-    videoPlayable.src = URL.createObjectURL(file);
-    videoPlayable.play();
+    videoControl.src = URL.createObjectURL(file);
+    videoControl.play();
 };
 
-var loadMJPEG = (file: Blob) => {
+var startAnalyze = () => {
     var crop: ImageCropInfomation = {
         offsetX: 139,
         offsetY: 236,
         width: 309,
         height: 133
     }
-    MJPEGReader.read(file).then((mjpeg) => new Promise((resolve, reject) => {
-        memoryBox.canvas.width = crop.width;
-        memoryBox.canvas.height = crop.height;    
+    memoryBox.canvas.width = crop.width;
+    memoryBox.canvas.height = crop.height;
 
+    MJPEGReader.read(file).then((mjpeg) => new Promise((resolve, reject) => {
         var i = 0;
         var time: number;
 
@@ -163,6 +164,12 @@ var loadMJPEG = (file: Blob) => {
         sequence.then(asyncOperation);
     }));
 };
+
+var getFrame = (time: number) => {
+    videoControl.onseeked = () => {
+    };
+
+}
 
 var equal = (currentTime: number, imageData: ImageData) => {
     return new Promise<Equality>((resolve, reject) => {
