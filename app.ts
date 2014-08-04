@@ -53,22 +53,7 @@ var imageDiffWorker = new Worker("imagediffworker.js");
 var getImageData = (file: Blob, width: number, height: number, crop: ImageCropInfomation) => {
     memoryBox.image.src = URL.createObjectURL(file, { oneTimeOnly: true });
 
-    return new Promise<ImageData>((resolve, reject) => {
-        var sequence = promiseImmediate();
-        var asyncOperation = () => {
-            if (!memoryBox.image.complete) {
-                sequence.then(promiseImmediate).then(asyncOperation);
-                return;
-            }
-
-            if (memoryBox.image.naturalWidth !== width
-                || memoryBox.image.naturalHeight !== height)
-                console.warn(["Different image size is detected.", memoryBox.image.naturalWidth, width, memoryBox.image.naturalHeight, height].join(" "));
-            memoryBox.canvasContext.drawImage(memoryBox.image, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
-            resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
-        };
-        sequence.then(asyncOperation);
-    });
+    return exportImageDataFromImage(memoryBox.image, width, height, crop);
 };
 
 var promiseImmediate = () =>
@@ -165,18 +150,40 @@ var startAnalyze = () => {
     }));
 };
 
-var getFrame = (time: number) => {
-    return new Promise<void>((resolve, reject) => {
+var getFrameImageData = (time: number, originalWidth: number, originalHeight: number, crop: ImageCropInfomation) => {
+    return new Promise<ImageData>((resolve, reject) => {
         videoControl.onseeked = () => {
             if (videoControl === <any>videoPresenter) {
-                //draw video
+                memoryBox.canvasContext.drawImage(videoPresenter, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
+                resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
             }
             else {
+                exportImageDataFromImage(<HTMLImageElement>videoPresenter, originalWidth, originalHeight, crop)
+                    .then((imageData) => resolve(imageData));
                 //draw image, as getImageData does
             }
         };
     });
 }
+
+var exportImageDataFromImage = (img: HTMLImageElement, width: number, height: number, crop: ImageCropInfomation) => {
+    return new Promise<ImageData>((resolve, reject) => {
+        var sequence = promiseImmediate();
+        var asyncOperation = () => {
+            if (!memoryBox.image.complete) {
+                sequence.then(promiseImmediate).then(asyncOperation);
+                return;
+            }
+
+            if (memoryBox.image.naturalWidth !== width
+                || memoryBox.image.naturalHeight !== height)
+                console.warn(["Different image size is detected.", memoryBox.image.naturalWidth, width, memoryBox.image.naturalHeight, height].join(" "));
+            memoryBox.canvasContext.drawImage(memoryBox.image, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
+            resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
+        };
+        sequence.then(asyncOperation);
+    });
+};
 
 var equal = (currentTime: number, imageData: ImageData) => {
     return new Promise<Equality>((resolve, reject) => {

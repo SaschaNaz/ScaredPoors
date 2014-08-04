@@ -32,21 +32,7 @@ var imageDiffWorker = new Worker("imagediffworker.js");
 var getImageData = function (file, width, height, crop) {
     memoryBox.image.src = URL.createObjectURL(file, { oneTimeOnly: true });
 
-    return new Promise(function (resolve, reject) {
-        var sequence = promiseImmediate();
-        var asyncOperation = function () {
-            if (!memoryBox.image.complete) {
-                sequence.then(promiseImmediate).then(asyncOperation);
-                return;
-            }
-
-            if (memoryBox.image.naturalWidth !== width || memoryBox.image.naturalHeight !== height)
-                console.warn(["Different image size is detected.", memoryBox.image.naturalWidth, width, memoryBox.image.naturalHeight, height].join(" "));
-            memoryBox.canvasContext.drawImage(memoryBox.image, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
-            resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
-        };
-        sequence.then(asyncOperation);
-    });
+    return exportImageDataFromImage(memoryBox.image, width, height, crop);
 };
 
 var promiseImmediate = function () {
@@ -141,15 +127,37 @@ var startAnalyze = function () {
     });
 };
 
-var getFrame = function (time) {
+var getFrameImageData = function (time, originalWidth, originalHeight, crop) {
     return new Promise(function (resolve, reject) {
         videoControl.onseeked = function () {
             if (videoControl === videoPresenter) {
-                //draw video
+                memoryBox.canvasContext.drawImage(videoPresenter, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
+                resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
             } else {
+                exportImageDataFromImage(videoPresenter, originalWidth, originalHeight, crop).then(function (imageData) {
+                    return resolve(imageData);
+                });
                 //draw image, as getImageData does
             }
         };
+    });
+};
+
+var exportImageDataFromImage = function (img, width, height, crop) {
+    return new Promise(function (resolve, reject) {
+        var sequence = promiseImmediate();
+        var asyncOperation = function () {
+            if (!memoryBox.image.complete) {
+                sequence.then(promiseImmediate).then(asyncOperation);
+                return;
+            }
+
+            if (memoryBox.image.naturalWidth !== width || memoryBox.image.naturalHeight !== height)
+                console.warn(["Different image size is detected.", memoryBox.image.naturalWidth, width, memoryBox.image.naturalHeight, height].join(" "));
+            memoryBox.canvasContext.drawImage(memoryBox.image, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
+            resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
+        };
+        sequence.then(asyncOperation);
     });
 };
 
