@@ -22,8 +22,8 @@
                 .then((blob) => MJPEGReader.read(blob))
                 .then((video) => {
                     this._src = video;
-                    if (this.onloadstart)
-                        this.onloadstart(this._createEvent());
+                    if (this.onloadedmetadata)
+                        this.onloadedmetadata(this._createEvent());
                 });
         else {
             this._currentVideoTime = -1; // blocks further rendering
@@ -42,8 +42,8 @@
         });
     }
 
-    onloadstart: (e: PlayableEvent) => any;
-    onseeked: (e: PlayableEvent) => any;
+    onloadedmetadata: (e: HalfbakedEvent) => any = null;
+    onseeked: (e: HalfbakedEvent) => any = null;
 
     /** Stops playing when set to true, automatically returning to false */
     private _playSessionToken: { stop: boolean; } = null;
@@ -133,7 +133,7 @@
     }
 
     private _createEvent() {
-        return <PlayableEvent>{
+        return <HalfbakedEvent>{
             bubbles: false,
             cancelable: false,
             cancelBubble: false,
@@ -158,17 +158,18 @@ interface VideoPlayable {
     videoHeight: number;
     duration: number;
 
-    onseeked: (e: PlayableEvent) => any;
+    onseeked: (e: HalfbakedEvent) => any;
+    onloadedmetadata: (e: HalfbakedEvent) => any;
 }
-interface PlayableEvent {
+interface HalfbakedEvent {
     bubbles: boolean;
     cancelable: boolean;
     cancelBubble: boolean;
-    currentTarget: VideoPlayable;
+    currentTarget: any;
     defaultPrevented: boolean;
     eventPhase: number;
     isTrusted: boolean;
-    target: VideoPlayable;
+    target: any;
     timeStamp: number;
     type: string;
 }

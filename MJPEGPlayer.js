@@ -1,6 +1,8 @@
 ﻿var MJPEGPlayer = (function () {
     function MJPEGPlayer() {
         this._src = null;
+        this.onloadedmetadata = null;
+        this.onseeked = null;
         /** Stops playing when set to true, automatically returning to false */
         this._playSessionToken = null;
         this._currentVideoTime = -1;
@@ -31,8 +33,8 @@
                     return MJPEGReader.read(blob);
                 }).then(function (video) {
                     _this._src = video;
-                    if (_this.onloadstart)
-                        _this.onloadstart(_this._createEvent());
+                    if (_this.onloadedmetadata)
+                        _this.onloadedmetadata(_this._createEvent());
                 });
             else {
                 this._currentVideoTime = -1; // blocks further rendering

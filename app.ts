@@ -10,7 +10,7 @@ class MemoryBox {
 declare var videoNativeElement: HTMLVideoElement;
 var videoPresenter: HTMLElement = null;
 declare var presenter: HTMLDivElement;
-var videoControl: VideoPlayable;
+var videoControl: VideoPlayable = null;
 
 declare var info: HTMLSpanElement;
 var analyzer = new ScaredPoors();
@@ -71,15 +71,16 @@ no getFrame in HTMLVideoElement, should make equivalent method (with canvas)
 */
 
 var loadVideo = (file: Blob) => {
-    if (videoControl)
+    if (videoControl) {
         videoControl.pause();
-    if (videoControl !== <any>videoPresenter) {
-        videoControl.src = "";
-        document.removeChild((<any>videoPresenter).player);
-        videoPresenter = null;
+        if (videoControl !== <any>videoPresenter) {
+            videoControl.src = "";
+            document.removeChild((<any>videoPresenter).player);
+            videoPresenter = null;
+        }
     }
 
-    if (videoNativeElement.canPlayType(file.type)) {
+    if (!videoNativeElement.canPlayType(file.type)) {
         switch (file.type) {
             case "video/avi":
                 var player = new MJPEGPlayer();
@@ -90,10 +91,20 @@ var loadVideo = (file: Blob) => {
         }
     }
     else
-        videoNativeElement = videoPresenter = videoNativeElement;
+        videoPresenter = videoControl = videoNativeElement;
     
     videoControl.src = URL.createObjectURL(file);
-    videoControl.play();
+
+    return waitMetadata().then(() => startAnalyze());
+};
+
+var waitMetadata = () => {
+    return new Promise<void>((resolve, reject) => {
+        videoControl.onloadedmetadata = () => {
+            videoControl.onloadedmetadata = null;
+            resolve(undefined);
+        };
+    });
 };
 
 var startAnalyze = () => {
@@ -111,11 +122,18 @@ var startAnalyze = () => {
             lastImageFrame = { time: videoControl.currentTime, imageData: imageData };
         });
 
-    for (var time = 0; time < videoControl.duration; time += 0.2) {
+    for (var time = 0.2; time < videoControl.duration; time += 0.2) {
         ((time: number) => {
+            var imageData: ImageData;
             sequence = sequence
-                .then(() => {
-                    
+                .then(() => getFrameImageData(time, videoControl.videoWidth, videoControl.videoHeight, crop))
+                .then((_imageData) => {
+                    imageData = _imageData;
+                    return equal(videoControl.currentTime, imageData)
+                })
+                .then((equality) => {
+                    equalities.push({ watched: lastImageFrame.time, judged: equality.currentTime, isOccured: equality.isEqual });
+                    lastImageFrame = { time: videoControl.currentTime, imageData: imageData };
                 });
         })(time);
     }
@@ -166,12 +184,13 @@ var startAnalyze = () => {
         //        });
         //};
         //sequence.then(asyncOperation);
-    });
+    //});
 };
 
 var getFrameImageData = (time: number, originalWidth: number, originalHeight: number, crop: ImageCropInfomation) => {
     return new Promise<ImageData>((resolve, reject) => {
         videoControl.onseeked = () => {
+            videoControl.onseeked = null;
             if (videoControl === <any>videoPresenter) {
                 memoryBox.canvasContext.drawImage(videoPresenter, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
                 resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
@@ -190,15 +209,15 @@ var exportImageDataFromImage = (img: HTMLImageElement, width: number, height: nu
     return new Promise<ImageData>((resolve, reject) => {
         var sequence = promiseImmediate();
         var asyncOperation = () => {
-            if (!memoryBox.image.complete) {
+            if (!img.complete) {
                 sequence.then(promiseImmediate).then(asyncOperation);
                 return;
             }
 
-            if (memoryBox.image.naturalWidth !== width
-                || memoryBox.image.naturalHeight !== height)
-                console.warn(["Different image size is detected.", memoryBox.image.naturalWidth, width, memoryBox.image.naturalHeight, height].join(" "));
-            memoryBox.canvasContext.drawImage(memoryBox.image, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
+            if (img.naturalWidth !== width
+                || img.naturalHeight !== height)
+                console.warn(["Different image size is detected.", img.naturalWidth, width, img.naturalHeight, height].join(" "));
+            memoryBox.canvasContext.drawImage(img, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
             resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
         };
         sequence.then(asyncOperation);
@@ -213,7 +232,7 @@ var equal = (currentTime: number, imageData: ImageData) => {
                 resolve(e.data);
         };
         imageDiffWorker.addEventListener("message", callback);
-        imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageFrame.imageData, data2: imageData, colorTolerance: 100, pixelTolerance: 100 });
+        imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageFrame.imageData, data2: imageData, colorTolerance: 60, pixelTolerance: 100 });
     });
 };
 
