@@ -22,8 +22,8 @@
                 .then((blob) => MJPEGReader.read(blob))
                 .then((video) => {
                     this._src = video;
-                    //if (this.onloadstart)
-                    //    this.onloadstart(this._createEvent());
+                    if (this.onloadstart)
+                        this.onloadstart(this._createEvent());
                 });
         else {
             this._currentVideoTime = -1; // blocks further rendering
@@ -42,7 +42,7 @@
         });
     }
 
-    //onloadstart: (e: PlayableEvent) => any;
+    onloadstart: (e: PlayableEvent) => any;
     onseeked: (e: PlayableEvent) => any;
 
     /** Stops playing when set to true, automatically returning to false */
@@ -125,6 +125,12 @@
         else
             return 0;
     }
+    get duration() {
+        if (this._src)
+            return this._src.duration;
+        else
+            return 0;
+    }
 
     private _createEvent() {
         return <PlayableEvent>{
@@ -150,6 +156,7 @@ interface VideoPlayable {
 
     videoWidth: number;
     videoHeight: number;
+    duration: number;
 
     onseeked: (e: PlayableEvent) => any;
 }

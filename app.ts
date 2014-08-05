@@ -50,7 +50,7 @@ if (!window.setImmediate) {
 
 var imageDiffWorker = new Worker("imagediffworker.js");
 
-var getImageData = (file: Blob, width: number, height: number, crop: ImageCropInfomation) => {
+var getImageDataFromBlob = (file: Blob, width: number, height: number, crop: ImageCropInfomation) => {
     memoryBox.image.src = URL.createObjectURL(file, { oneTimeOnly: true });
 
     return exportImageDataFromImage(memoryBox.image, width, height, crop);
@@ -106,48 +106,67 @@ var startAnalyze = () => {
     memoryBox.canvas.width = crop.width;
     memoryBox.canvas.height = crop.height;
 
-    MJPEGReader.read(file).then((mjpeg) => new Promise((resolve, reject) => {
-        var i = 0;
-        var time: number;
+    var sequence = getFrameImageData(0, videoControl.videoWidth, videoControl.videoHeight, crop)
+        .then((imageData) => {
+            lastImageFrame = { time: videoControl.currentTime, imageData: imageData };
+        });
 
-        var finish = () => {
-            // operation chain ends
-            info.innerText = displayEqualities(equalities);
-            resolve(undefined)
-            return Promise.reject();
-        };
-
-        var sequence = mjpeg.getForwardFrame(0)
-            .then((frame) => {
-                i = frame.index;
-                time = i / mjpeg.totalFrames * mjpeg.duration;
-                return getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
-            }).then((imageData) => {
-                lastImageFrame = { time: time, imageData: imageData };
-            });
-
-        var asyncOperation = () => {
-            var _imageData: ImageData;
-            var next = Math.floor(i + 0.2 / mjpeg.frameInterval);
-            if (next >= mjpeg.totalFrames)
-                return finish();
-
-            return mjpeg.getForwardFrame(next)
-                .then<ImageData>((frame) => {
-                    i = frame.index;
-                    time = i / mjpeg.totalFrames * mjpeg.duration;
-                    return getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
-                }).then((imageData) => {
-                    _imageData = imageData;
-                    return equal(time, imageData);
-                }).then((equality) => {
-                    equalities.push({ watched: lastImageFrame.time, judged: equality.currentTime, isOccured: equality.isEqual });
-                    lastImageFrame = { time: time, imageData: _imageData };
-                    sequence = sequence.then<void>(asyncOperation); // chain operation
+    for (var time = 0; time < videoControl.duration; time += 0.2) {
+        ((time: number) => {
+            sequence = sequence
+                .then(() => {
+                    
                 });
-        };
-        sequence.then(asyncOperation);
-    }));
+        })(time);
+    }
+
+    return sequence
+        .then(() => {
+            info.innerText = displayEqualities(equalities);
+        });
+        //var asyncOperation = () => {
+        //    var _imageData: ImageData;
+        //    var next = time + 0.2;
+        //    if (next > videoControl.duration)
+        //        return finish;
+
+        //    getFrameImageData(next, videoControl.videoWidth, videoControl.videoHeight, crop)
+        //        .then((imageData) => {
+                    
+        //        });
+        //};
+        
+        //var sequence = mjpeg.getForwardFrame(0)
+        //    .then((frame) => {
+        //        i = frame.index;
+        //        time = i / mjpeg.totalFrames * mjpeg.duration;
+        //        return getImageDataFromBlob(frame.data, mjpeg.width, mjpeg.height, crop);
+        //    }).then((imageData) => {
+        //        lastImageFrame = { time: time, imageData: imageData };
+        //    });
+
+        //var asyncOperation = () => {
+        //    var _imageData: ImageData;
+        //    var next = Math.floor(i + 0.2 / mjpeg.frameInterval);
+        //    if (next >= mjpeg.totalFrames)
+        //        return finish();
+
+        //    return mjpeg.getForwardFrame(next)
+        //        .then<ImageData>((frame) => {
+        //            i = frame.index;
+        //            time = i / mjpeg.totalFrames * mjpeg.duration;
+        //            return getImageDataFromBlob(frame.data, mjpeg.width, mjpeg.height, crop);
+        //        }).then((imageData) => {
+        //            _imageData = imageData;
+        //            return equal(time, imageData);
+        //        }).then((equality) => {
+        //            equalities.push({ watched: lastImageFrame.time, judged: equality.currentTime, isOccured: equality.isEqual });
+        //            lastImageFrame = { time: time, imageData: _imageData };
+        //            sequence = sequence.then<void>(asyncOperation); // chain operation
+        //        });
+        //};
+        //sequence.then(asyncOperation);
+    });
 };
 
 var getFrameImageData = (time: number, originalWidth: number, originalHeight: number, crop: ImageCropInfomation) => {
@@ -160,9 +179,10 @@ var getFrameImageData = (time: number, originalWidth: number, originalHeight: nu
             else {
                 exportImageDataFromImage(<HTMLImageElement>videoPresenter, originalWidth, originalHeight, crop)
                     .then((imageData) => resolve(imageData));
-                //draw image, as getImageData does
+                //draw image, as getImageData does.
             }
         };
+        videoControl.currentTime = time;
     });
 }
 

@@ -29,7 +29,7 @@ if (!window.setImmediate) {
 
 var imageDiffWorker = new Worker("imagediffworker.js");
 
-var getImageData = function (file, width, height, crop) {
+var getImageDataFromBlob = function (file, width, height, crop) {
     memoryBox.image.src = URL.createObjectURL(file, { oneTimeOnly: true });
 
     return exportImageDataFromImage(memoryBox.image, width, height, crop);
@@ -83,47 +83,63 @@ var startAnalyze = function () {
     memoryBox.canvas.width = crop.width;
     memoryBox.canvas.height = crop.height;
 
-    MJPEGReader.read(file).then(function (mjpeg) {
-        return new Promise(function (resolve, reject) {
-            var i = 0;
-            var time;
+    return new Promise(function (resolve, reject) {
+        var finish = function () {
+            // operation chain ends
+            return Promise.reject();
+        };
 
-            var finish = function () {
-                // operation chain ends
-                info.innerText = displayEqualities(equalities);
-                resolve(undefined);
-                return Promise.reject();
-            };
-
-            var sequence = mjpeg.getForwardFrame(0).then(function (frame) {
-                i = frame.index;
-                time = i / mjpeg.totalFrames * mjpeg.duration;
-                return getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
-            }).then(function (imageData) {
-                lastImageFrame = { time: time, imageData: imageData };
-            });
-
-            var asyncOperation = function () {
-                var _imageData;
-                var next = Math.floor(i + 0.2 / mjpeg.frameInterval);
-                if (next >= mjpeg.totalFrames)
-                    return finish();
-
-                return mjpeg.getForwardFrame(next).then(function (frame) {
-                    i = frame.index;
-                    time = i / mjpeg.totalFrames * mjpeg.duration;
-                    return getImageData(frame.data, mjpeg.width, mjpeg.height, crop);
-                }).then(function (imageData) {
-                    _imageData = imageData;
-                    return equal(time, imageData);
-                }).then(function (equality) {
-                    equalities.push({ watched: lastImageFrame.time, judged: equality.currentTime, isOccured: equality.isEqual });
-                    lastImageFrame = { time: time, imageData: _imageData };
-                    sequence = sequence.then(asyncOperation); // chain operation
-                });
-            };
-            sequence.then(asyncOperation);
+        var sequence = getFrameImageData(0, videoControl.videoWidth, videoControl.videoHeight, crop).then(function (imageData) {
+            lastImageFrame = { time: videoControl.currentTime, imageData: imageData };
         });
+
+        for (var time = 0; time < videoControl.duration; time += 0.2) {
+            (function (time) {
+                sequence = sequence.then(function () {
+                });
+            })(time);
+        }
+
+        return sequence.then(function () {
+            info.innerText = displayEqualities(equalities);
+        });
+        //var asyncOperation = () => {
+        //    var _imageData: ImageData;
+        //    var next = time + 0.2;
+        //    if (next > videoControl.duration)
+        //        return finish;
+        //    getFrameImageData(next, videoControl.videoWidth, videoControl.videoHeight, crop)
+        //        .then((imageData) => {
+        //        });
+        //};
+        //var sequence = mjpeg.getForwardFrame(0)
+        //    .then((frame) => {
+        //        i = frame.index;
+        //        time = i / mjpeg.totalFrames * mjpeg.duration;
+        //        return getImageDataFromBlob(frame.data, mjpeg.width, mjpeg.height, crop);
+        //    }).then((imageData) => {
+        //        lastImageFrame = { time: time, imageData: imageData };
+        //    });
+        //var asyncOperation = () => {
+        //    var _imageData: ImageData;
+        //    var next = Math.floor(i + 0.2 / mjpeg.frameInterval);
+        //    if (next >= mjpeg.totalFrames)
+        //        return finish();
+        //    return mjpeg.getForwardFrame(next)
+        //        .then<ImageData>((frame) => {
+        //            i = frame.index;
+        //            time = i / mjpeg.totalFrames * mjpeg.duration;
+        //            return getImageDataFromBlob(frame.data, mjpeg.width, mjpeg.height, crop);
+        //        }).then((imageData) => {
+        //            _imageData = imageData;
+        //            return equal(time, imageData);
+        //        }).then((equality) => {
+        //            equalities.push({ watched: lastImageFrame.time, judged: equality.currentTime, isOccured: equality.isEqual });
+        //            lastImageFrame = { time: time, imageData: _imageData };
+        //            sequence = sequence.then<void>(asyncOperation); // chain operation
+        //        });
+        //};
+        //sequence.then(asyncOperation);
     });
 };
 
@@ -137,9 +153,10 @@ var getFrameImageData = function (time, originalWidth, originalHeight, crop) {
                 exportImageDataFromImage(videoPresenter, originalWidth, originalHeight, crop).then(function (imageData) {
                     return resolve(imageData);
                 });
-                //draw image, as getImageData does
+                //draw image, as getImageData does.
             }
         };
+        videoControl.currentTime = time;
     });
 };
 

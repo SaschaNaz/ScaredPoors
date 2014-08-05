@@ -31,8 +31,8 @@
                     return MJPEGReader.read(blob);
                 }).then(function (video) {
                     _this._src = video;
-                    //if (this.onloadstart)
-                    //    this.onloadstart(this._createEvent());
+                    if (_this.onloadstart)
+                        _this.onloadstart(_this._createEvent());
                 });
             else {
                 this._currentVideoTime = -1; // blocks further rendering
@@ -142,6 +142,16 @@
         get: function () {
             if (this._src)
                 return this._src.height;
+            else
+                return 0;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(MJPEGPlayer.prototype, "duration", {
+        get: function () {
+            if (this._src)
+                return this._src.duration;
             else
                 return 0;
         },
