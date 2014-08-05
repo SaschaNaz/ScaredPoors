@@ -15,7 +15,7 @@ var analyzer = new ScaredPoors();
 var lastImageFrame;
 var loadedArrayBuffer;
 var memoryBox = new MemoryBox();
-var equalities = [];
+var occurrences = [];
 
 if (!window.setImmediate) {
     window.setImmediate = function (expression) {
@@ -109,14 +109,14 @@ var startAnalyze = function () {
                 imageData = _imageData;
                 return equal(videoControl.currentTime, imageData);
             }).then(function (equality) {
-                equalities.push({ watched: lastImageFrame.time, judged: equality.currentTime, isOccured: equality.isEqual });
+                occurrences.push({ watched: lastImageFrame.time, judged: equality.time, isOccured: equality.isEqual });
                 lastImageFrame = { time: videoControl.currentTime, imageData: imageData };
             });
         })(time);
     }
 
     return sequence.then(function () {
-        info.innerText = displayEqualities(equalities);
+        info.innerText = displayEqualities(occurrences);
     });
     //var asyncOperation = () => {
     //    var _imageData: ImageData;
@@ -194,7 +194,7 @@ var exportImageDataFromImage = function (img, width, height, crop) {
     });
 };
 
-var equal = function (currentTime, imageData) {
+var equal = function (time, imageData) {
     return new Promise(function (resolve, reject) {
         var callback = function (e) {
             imageDiffWorker.removeEventListener("message", callback);
@@ -202,7 +202,7 @@ var equal = function (currentTime, imageData) {
                 resolve(e.data);
         };
         imageDiffWorker.addEventListener("message", callback);
-        imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageFrame.imageData, data2: imageData, colorTolerance: 60, pixelTolerance: 100 });
+        imageDiffWorker.postMessage({ type: "equal", time: time, data1: lastImageFrame.imageData, data2: imageData, colorTolerance: 60, pixelTolerance: 100 });
     });
 };
 

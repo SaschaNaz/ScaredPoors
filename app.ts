@@ -17,7 +17,7 @@ var analyzer = new ScaredPoors();
 var lastImageFrame: FrameData;
 var loadedArrayBuffer: ArrayBuffer;
 var memoryBox = new MemoryBox();
-var equalities: Occurrence[] = [];
+var occurrences: Occurrence[] = [];
 interface ImageCropInfomation {
     offsetX: number;
     offsetY: number;
@@ -41,7 +41,7 @@ interface Continuity {
 interface Equality {
     type: string;
     isEqual: boolean;
-    currentTime: number;
+    time: number;
 }
 
 if (!window.setImmediate) {
@@ -132,7 +132,7 @@ var startAnalyze = () => {
                     return equal(videoControl.currentTime, imageData)
                 })
                 .then((equality) => {
-                    equalities.push({ watched: lastImageFrame.time, judged: equality.currentTime, isOccured: equality.isEqual });
+                    occurrences.push({ watched: lastImageFrame.time, judged: equality.time, isOccured: equality.isEqual });
                     lastImageFrame = { time: videoControl.currentTime, imageData: imageData };
                 });
         })(time);
@@ -140,7 +140,7 @@ var startAnalyze = () => {
 
     return sequence
         .then(() => {
-            info.innerText = displayEqualities(equalities);
+            info.innerText = displayEqualities(occurrences);
         });
         //var asyncOperation = () => {
         //    var _imageData: ImageData;
@@ -224,7 +224,7 @@ var exportImageDataFromImage = (img: HTMLImageElement, width: number, height: nu
     });
 };
 
-var equal = (currentTime: number, imageData: ImageData) => {
+var equal = (time: number, imageData: ImageData) => {
     return new Promise<Equality>((resolve, reject) => {
         var callback = (e: MessageEvent) => {
             imageDiffWorker.removeEventListener("message", callback);
@@ -232,7 +232,7 @@ var equal = (currentTime: number, imageData: ImageData) => {
                 resolve(e.data);
         };
         imageDiffWorker.addEventListener("message", callback);
-        imageDiffWorker.postMessage({ type: "equal", currentTime: currentTime, data1: lastImageFrame.imageData, data2: imageData, colorTolerance: 60, pixelTolerance: 100 });
+        imageDiffWorker.postMessage({ type: "equal", time: time, data1: lastImageFrame.imageData, data2: imageData, colorTolerance: 60, pixelTolerance: 100 });
     });
 };
 

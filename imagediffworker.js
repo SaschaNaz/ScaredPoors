@@ -48,7 +48,7 @@ addEventListener('message', function (e) {
         postMessage({
             type: "equality",
             isEqual: ImageEquality.isEqual(e.data.data1, e.data.data2, e.data.colorTolerance, e.data.pixelTolerance),
-            currentTime: e.data.currentTime
+            time: e.data.time
         }, null);
     }
 });

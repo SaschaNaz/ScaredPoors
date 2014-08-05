@@ -21,8 +21,12 @@
     <div id="content">
         <label for="videoInput">Load a video file: </label><input id="videoInput" type="file" onchange="loadVideo(event.target.files[0])" />
         <div id="presenter">
-            <video id="videoNativeElement" style="width: 640px; height: 480px; display: none;"></video>
+            <video id="videoNativeElement" style="display: none;"></video>
         </div>
+        <span id="frozenTimeText"></span><br />
+        <span id="freezingText"></span><br />
+        <span id="stoppingText"></span><br />
+
         <textarea id="info" style="width: 640px; height: 480px;"></textarea>
     </div>
 </body>
