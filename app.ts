@@ -122,7 +122,7 @@ var startAnalyze = () => {
             lastImageFrame = { time: videoControl.currentTime, imageData: imageData };
         });
 
-    for (var time = 0.2; time < videoControl.duration; time += 0.2) {
+    for (var time = 0.1; time < videoControl.duration; time += 0.1) {
         ((time: number) => {
             var imageData: ImageData;
             sequence = sequence
