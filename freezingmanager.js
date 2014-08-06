@@ -4,6 +4,7 @@
         this._movedLastTime = true;
         this._lastStopping = null;
         this._totalFrozenTime = 0;
+        this._elapsedTime = 0;
         this.minimalDuration = 1.5;
     }
     Object.defineProperty(FreezingManager.prototype, "_lastStoppingDuration", {
@@ -13,9 +14,23 @@
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(FreezingManager.prototype, "frozenRatio", {
+        get: function () {
+            if (!this._lastStopping)
+                return 0;
+            var frozen = this._totalFrozenTime;
+            if (!this._movedLastTime && this._lastStoppingDuration > this.minimalDuration)
+                frozen += this._lastStoppingDuration;
+
+            return frozen / this._elapsedTime;
+        },
+        enumerable: true,
+        configurable: true
+    });
 
     FreezingManager.prototype.loadOccurrence = function (occurrence) {
-        this._presentElapsedTime(occurrence.judged);
+        this._elapsedTime = occurrence.judged;
+        this._presentElapsedTime(this._elapsedTime);
         if (!occurrence.isOccured) {
             this._presentStopping(false);
             this._presentFreezing(false);
@@ -49,19 +64,19 @@
     };
 
     FreezingManager.prototype._presentElapsedTime = function (time) {
-        elapsedTimeText.textContent = time.toString();
+        elapsedTimeText.textContent = time.toFixed(2);
     };
 
     FreezingManager.prototype._presentFrozenTime = function (time) {
-        frozenTimeText.textContent = time.toString();
+        frozenTimeText.textContent = time.toFixed(2);
     };
 
     FreezingManager.prototype._presentStopping = function (stopping) {
-        stoppingText.textContent = stopping ? "true" : "false";
+        stoppingPresenter.className = stopping ? "true" : "false";
     };
 
     FreezingManager.prototype._presentFreezing = function (freezing) {
-        freezingText.textContent = freezing ? "true" : "false";
+        freezingPresenter.className = freezing ? "true" : "false";
     };
     return FreezingManager;
 })();

@@ -25,6 +25,7 @@
   <ItemGroup>
     <TypeScriptCompile Include="app.ts" />
     <TypeScriptCompile Include="freezingmanager.ts" />
+    <TypeScriptCompile Include="html.d.ts" />
     <TypeScriptCompile Include="mjpegplayer.ts" />
     <TypeScriptCompile Include="scaredpoors.ts" />
     <TypeScriptCompile Include="imagediffworker.ts" />

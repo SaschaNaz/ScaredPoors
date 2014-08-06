@@ -8,7 +8,6 @@ var MemoryBox = (function () {
 })();
 
 var videoPresenter = null;
-
 var videoControl = null;
 
 var analyzer = new ScaredPoors();
@@ -116,7 +115,9 @@ var startAnalyze = function () {
         })(time);
     }
 
-    return sequence;
+    return sequence.then(function () {
+        frozenRatioText.textContent = manager.frozenRatio.toFixed(2);
+    });
     //var asyncOperation = () => {
     //    var _imageData: ImageData;
     //    var next = time + 0.2;

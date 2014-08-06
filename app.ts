@@ -7,12 +7,9 @@ class MemoryBox {
     }
 }
 
-declare var videoNativeElement: HTMLVideoElement;
 var videoPresenter: HTMLElement = null;
-declare var presenter: HTMLDivElement;
 var videoControl: VideoPlayable = null;
 
-declare var info: HTMLSpanElement;
 var analyzer = new ScaredPoors();
 var lastImageFrame: FrameData;
 var loadedArrayBuffer: ArrayBuffer;
@@ -129,7 +126,7 @@ var startAnalyze = () => {
                 .then(() => getFrameImageData(time, videoControl.videoWidth, videoControl.videoHeight, crop))
                 .then((_imageData) => {
                     imageData = _imageData;
-                    return equal(videoControl.currentTime, imageData)
+                    return equal(videoControl.currentTime, imageData);
                 })
                 .then((equality) => {
                     manager.loadOccurrence({ watched: lastImageFrame.time, judged: equality.time, isOccured: equality.isEqual });
@@ -138,7 +135,10 @@ var startAnalyze = () => {
         })(time);
     }
 
-    return sequence;
+    return sequence
+        .then(() => {
+             frozenRatioText.textContent = manager.frozenRatio.toFixed(2);
+        });
         //var asyncOperation = () => {
         //    var _imageData: ImageData;
         //    var next = time + 0.2;
