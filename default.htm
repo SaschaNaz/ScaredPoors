@@ -12,6 +12,7 @@
     <script src="submodules/mjpegdecoder/mjpegdecoder.js"></script>
 
     <script src="scaredpoors.js"></script>
+    <script src="freezingmanager.js"></script>
     <script src="mjpegplayer.js"></script>
     <script src="app.js"></script>
 </head>
@@ -23,9 +24,10 @@
         <div id="presenter">
             <video id="videoNativeElement" style="display: none;"></video>
         </div>
-        <span id="frozenTimeText"></span><br />
-        <span id="freezingText"></span><br />
-        <span id="stoppingText"></span><br />
+        Total elapsed time: <span id="elapsedTimeText">0</span><br />
+        Total frozen time: <span id="frozenTimeText">0</span><br />
+        Freezing: <span id="freezingText">false</span><br />
+        Stopping: <span id="stoppingText">false</span><br />
 
         <textarea id="info" style="width: 640px; height: 480px;"></textarea>
     </div>

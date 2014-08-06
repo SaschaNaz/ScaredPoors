@@ -15,7 +15,7 @@ var analyzer = new ScaredPoors();
 var lastImageFrame;
 var loadedArrayBuffer;
 var memoryBox = new MemoryBox();
-var occurrences = [];
+
 
 if (!window.setImmediate) {
     window.setImmediate = function (expression) {
@@ -95,12 +95,13 @@ var startAnalyze = function () {
     };
     memoryBox.canvas.width = crop.width;
     memoryBox.canvas.height = crop.height;
+    var manager = new FreezingManager();
 
     var sequence = getFrameImageData(0, videoControl.videoWidth, videoControl.videoHeight, crop).then(function (imageData) {
         lastImageFrame = { time: videoControl.currentTime, imageData: imageData };
     });
 
-    for (var time = 0.1; time < videoControl.duration; time += 0.1) {
+    for (var time = 0.1; time <= videoControl.duration; time += 0.1) {
         (function (time) {
             var imageData;
             sequence = sequence.then(function () {
@@ -109,15 +110,13 @@ var startAnalyze = function () {
                 imageData = _imageData;
                 return equal(videoControl.currentTime, imageData);
             }).then(function (equality) {
-                occurrences.push({ watched: lastImageFrame.time, judged: equality.time, isOccured: equality.isEqual });
+                manager.loadOccurrence({ watched: lastImageFrame.time, judged: equality.time, isOccured: equality.isEqual });
                 lastImageFrame = { time: videoControl.currentTime, imageData: imageData };
             });
         })(time);
     }
 
-    return sequence.then(function () {
-        info.innerText = displayEqualities(occurrences);
-    });
+    return sequence;
     //var asyncOperation = () => {
     //    var _imageData: ImageData;
     //    var next = time + 0.2;
@@ -205,41 +204,37 @@ var equal = function (time, imageData) {
         imageDiffWorker.postMessage({ type: "equal", time: time, data1: lastImageFrame.imageData, data2: imageData, colorTolerance: 60, pixelTolerance: 100 });
     });
 };
-
-var displayEqualities = function (freezings) {
-    var continuousFreezing = [];
-    var movedLastTime = true;
-    var last;
-    freezings.forEach(function (freezing) {
-        if (!freezing.isOccured) {
-            movedLastTime = true;
-            return;
-        }
-
-        if (movedLastTime) {
-            if (last) {
-                last.duration = parseFloat((last.end - last.start).toFixed(3));
-                if (last.duration < 1.5)
-                    continuousFreezing.pop();
-            }
-            last = { start: parseFloat(freezing.watched.toFixed(3)), end: parseFloat(freezing.judged.toFixed(3)) };
-            continuousFreezing.push(last);
-        } else
-            last.end = parseFloat(freezing.judged.toFixed(3));
-
-        movedLastTime = false;
-    });
-    last.duration = parseFloat((last.end - last.start).toFixed(3));
-    return continuousFreezing.map(function (freezing) {
-        return JSON.stringify(freezing);
-    }).join("\r\n") + "\r\n\r\n" + getTotalDuration(continuousFreezing);
-};
-
-var getTotalDuration = function (continuities) {
-    var total = 0;
-    continuities.forEach(function (continuity) {
-        total += continuity.duration;
-    });
-    return total;
-};
+//var displayEqualities = (freezings: Occurrence[]) => {
+//    var continuousFreezing: Continuity[] = [];
+//    var movedLastTime = true;
+//    var last: Continuity;
+//    freezings.forEach((freezing) => {
+//        if (!freezing.isOccured) {
+//            movedLastTime = true;
+//            return;
+//        }
+//        if (movedLastTime) {
+//            if (last) {
+//                last.duration = parseFloat((last.end - last.start).toFixed(3));
+//                if (last.duration < 1.5)
+//                    continuousFreezing.pop();
+//            }
+//            last = { start: parseFloat(freezing.watched.toFixed(3)), end: parseFloat(freezing.judged.toFixed(3)) };
+//            continuousFreezing.push(last);
+//        }
+//        else
+//            last.end = parseFloat(freezing.judged.toFixed(3));
+//        movedLastTime = false;
+//    });
+//    last.duration = parseFloat((last.end - last.start).toFixed(3));
+//    return continuousFreezing.map((freezing) => { return JSON.stringify(freezing); }).join("\r\n")
+//        + "\r\n\r\n" + getTotalDuration(continuousFreezing);
+//}
+//var getTotalDuration = (continuities: Continuity[]) => {
+//    var total = 0;
+//    continuities.forEach((continuity) => {
+//        total += continuity.duration;
+//    });
+//    return total;
+//}
 //# sourceMappingURL=app.js.map
