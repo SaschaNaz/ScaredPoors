@@ -91,16 +91,7 @@ var loadVideo = (file: Blob) => {
     
     videoControl.src = URL.createObjectURL(file);
 
-    return waitMetadata().then(() => startAnalyze());
-};
-
-var waitMetadata = () => {
-    return new Promise<void>((resolve, reject) => {
-        videoControl.onloadedmetadata = () => {
-            videoControl.onloadedmetadata = null;
-            resolve(undefined);
-        };
-    });
+    return VideoElementExtension.waitMetadata(videoControl).then(() => startAnalyze());
 };
 
 var startAnalyze = () => {
@@ -139,48 +130,6 @@ var startAnalyze = () => {
         .then(() => {
              frozenRatioText.textContent = manager.frozenRatio.toFixed(2);
         });
-        //var asyncOperation = () => {
-        //    var _imageData: ImageData;
-        //    var next = time + 0.2;
-        //    if (next > videoControl.duration)
-        //        return finish;
-
-        //    getFrameImageData(next, videoControl.videoWidth, videoControl.videoHeight, crop)
-        //        .then((imageData) => {
-                    
-        //        });
-        //};
-        
-        //var sequence = mjpeg.getForwardFrame(0)
-        //    .then((frame) => {
-        //        i = frame.index;
-        //        time = i / mjpeg.totalFrames * mjpeg.duration;
-        //        return getImageDataFromBlob(frame.data, mjpeg.width, mjpeg.height, crop);
-        //    }).then((imageData) => {
-        //        lastImageFrame = { time: time, imageData: imageData };
-        //    });
-
-        //var asyncOperation = () => {
-        //    var _imageData: ImageData;
-        //    var next = Math.floor(i + 0.2 / mjpeg.frameInterval);
-        //    if (next >= mjpeg.totalFrames)
-        //        return finish();
-
-        //    return mjpeg.getForwardFrame(next)
-        //        .then<ImageData>((frame) => {
-        //            i = frame.index;
-        //            time = i / mjpeg.totalFrames * mjpeg.duration;
-        //            return getImageDataFromBlob(frame.data, mjpeg.width, mjpeg.height, crop);
-        //        }).then((imageData) => {
-        //            _imageData = imageData;
-        //            return equal(time, imageData);
-        //        }).then((equality) => {
-        //            equalities.push({ watched: lastImageFrame.time, judged: equality.currentTime, isOccured: equality.isEqual });
-        //            lastImageFrame = { time: time, imageData: _imageData };
-        //            sequence = sequence.then<void>(asyncOperation); // chain operation
-        //        });
-        //};
-        //sequence.then(asyncOperation);
     //});
 };
 
