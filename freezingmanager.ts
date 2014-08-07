@@ -24,14 +24,13 @@
         this._elapsedTime = occurrence.judged;
         this._presentElapsedTime(this._elapsedTime);
         if (!occurrence.isOccured) {
-            this._presentStopping(false);
-            this._presentFreezing(false);
+            this._presentStatus("active");
             this._movedLastTime = true;
             return;
         }
         
         //occured
-        this._presentStopping(true);
+        this._presentStatus("stopped");
         if (this._movedLastTime) {
             if (this._lastStopping) {
                 if (this._lastStoppingDuration < this.minimalDuration) // too short stopping time, ignore it
@@ -48,7 +47,7 @@
         else {
             this._lastStopping.end = occurrence.judged;
             if (this._lastStoppingDuration >= this.minimalDuration) { // enough stopping time, continuing
-                this._presentFreezing(true);
+                this._presentStatus("frozen");
                 this._presentFrozenTime(this._totalFrozenTime + this._lastStoppingDuration);
             }
         }
@@ -64,11 +63,18 @@
         frozenTimeText.textContent = time.toFixed(2);
     }
 
-    private _presentStopping(stopping: boolean) {
-        stoppingPresenter.className = stopping ? "true" : "false";
-    }
-
-    private _presentFreezing(freezing: boolean) {
-        freezingPresenter.className = freezing ? "true" : "false";
+    /** 
+    Expects `active`, `stopped`, `frozen`.
+    */
+    private _presentStatus(status: string) {
+        switch (status) {
+            case "active":
+            case "stopped":
+            case "frozen":
+                statusPresenter.className = status;
+                break;
+            default:
+                throw new Error("Unexpected keyword");
+        }
     }
 }

@@ -32,14 +32,13 @@
         this._elapsedTime = occurrence.judged;
         this._presentElapsedTime(this._elapsedTime);
         if (!occurrence.isOccured) {
-            this._presentStopping(false);
-            this._presentFreezing(false);
+            this._presentStatus("active");
             this._movedLastTime = true;
             return;
         }
 
         //occured
-        this._presentStopping(true);
+        this._presentStatus("stopped");
         if (this._movedLastTime) {
             if (this._lastStopping) {
                 if (this._lastStoppingDuration < this.minimalDuration)
@@ -55,7 +54,7 @@
         } else {
             this._lastStopping.end = occurrence.judged;
             if (this._lastStoppingDuration >= this.minimalDuration) {
-                this._presentFreezing(true);
+                this._presentStatus("frozen");
                 this._presentFrozenTime(this._totalFrozenTime + this._lastStoppingDuration);
             }
         }
@@ -71,12 +70,19 @@
         frozenTimeText.textContent = time.toFixed(2);
     };
 
-    FreezingManager.prototype._presentStopping = function (stopping) {
-        stoppingPresenter.className = stopping ? "true" : "false";
-    };
-
-    FreezingManager.prototype._presentFreezing = function (freezing) {
-        freezingPresenter.className = freezing ? "true" : "false";
+    /**
+    Expects `active`, `stopped`, `frozen`.
+    */
+    FreezingManager.prototype._presentStatus = function (status) {
+        switch (status) {
+            case "active":
+            case "stopped":
+            case "frozen":
+                statusPresenter.className = status;
+                break;
+            default:
+                throw new Error("Unexpected keyword");
+        }
     };
     return FreezingManager;
 })();
