@@ -19,10 +19,11 @@
 </head>
 <body style="display: -ms-grid; -ms-grid-rows: 1fr 28px; -ms-grid-columns: 1fr;">
     <input id="videoInput" type="file" onchange="loadVideo(event.target.files[0])" style="display: none;" />
-    <div id="presenter" style="display: -ms-grid; -ms-grid-rows: 1fr; -ms-grid-columns: 1fr;">
+    <div id="presenter" style="z-index: -1; position: relative; display: -ms-grid; -ms-grid-rows: 1fr; -ms-grid-columns: 1fr;">
+        <div id="targetArea" style="display: none;"></div>
         <video id="videoNativeElement" style="display: none;"></video>
     </div>
-    <div onclick="videoInput.click()" >
+    <div id="panel" onclick="videoInput.click()">
         <h1>Scareds</h1>
         Total elapsed time: <span id="elapsedTimeText">0</span><br />
         Total frozen time: <span id="frozenTimeText">0</span><br />

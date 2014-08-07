@@ -6,6 +6,20 @@ class MemoryBox {
     }
 }
 
+class UIManipulations {
+    static loadFile = () => {
+        videoInput.click();
+    };
+    static setTargetAreaStartPoint = (e: PointerEvent) => {
+        
+    };
+    static modifyTargetAreaEndPoint = (e: PointerEvent) => {
+    };
+    static hideTargetArea = () => {
+    };
+
+}
+
 var videoPresenter: HTMLElement = null;
 var videoControl: VideoPlayable = null;
 
@@ -53,6 +67,8 @@ var promiseImmediate = () =>
     });
 
 var loadVideo = (file: Blob) => {
+    panel.onclick = null;
+
     if (videoControl) {
         videoControl.pause();
         if (videoControl !== <any>videoPresenter) {
@@ -78,7 +94,7 @@ var loadVideo = (file: Blob) => {
     videoControl.src = URL.createObjectURL(file);
 
     return VideoElementExtension.waitMetadata(videoControl).then(() => {
-        
+        //pointer events, with offsetLeft and offsetTop
     });
 };
 
