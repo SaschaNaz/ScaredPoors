@@ -1,7 +1,6 @@
-﻿var VideoElementExtension = (function () {
-    function VideoElementExtension() {
-    }
-    VideoElementExtension.waitMetadata = function (video) {
+﻿var VideoElementExtension;
+(function (VideoElementExtension) {
+    function waitMetadata(video) {
         if (video.duration)
             return Promise.resolve();
 
@@ -11,7 +10,7 @@
                 resolve(undefined);
             };
         });
-    };
-    return VideoElementExtension;
-})();
+    }
+    VideoElementExtension.waitMetadata = waitMetadata;
+})(VideoElementExtension || (VideoElementExtension = {}));
 //# sourceMappingURL=videoextension.js.map

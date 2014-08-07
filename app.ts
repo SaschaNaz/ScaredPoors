@@ -1,7 +1,6 @@
 class MemoryBox {
     canvas = document.createElement("canvas");
     canvasContext: CanvasRenderingContext2D;
-    image = document.createElement("img");
     constructor() {
         this.canvasContext = this.canvas.getContext("2d");
     }
@@ -46,25 +45,12 @@ if (!window.setImmediate) {
 
 var imageDiffWorker = new Worker("imagediffworker.js");
 
-var getImageDataFromBlob = (file: Blob, width: number, height: number, crop: ImageCropInfomation) => {
-    memoryBox.image.src = URL.createObjectURL(file, { oneTimeOnly: true });
-
-    return exportImageDataFromImage(memoryBox.image, width, height, crop);
-};
-
 var promiseImmediate = () =>
     new Promise<void>((resolve, reject) => {
         window.setImmediate(() => {
             resolve(undefined);
         });
     });
-
-
-/*
-TODO
-fix loadMJPEG to use VideoPlayable interface
-no getFrame in HTMLVideoElement, should make equivalent method (with canvas)
-*/
 
 var loadVideo = (file: Blob) => {
     if (videoControl) {
@@ -91,7 +77,9 @@ var loadVideo = (file: Blob) => {
     
     videoControl.src = URL.createObjectURL(file);
 
-    return VideoElementExtension.waitMetadata(videoControl).then(() => startAnalyze());
+    return VideoElementExtension.waitMetadata(videoControl).then(() => {
+        
+    });
 };
 
 var startAnalyze = () => {
@@ -181,40 +169,3 @@ var equal = (time: number, imageData: ImageData) => {
         imageDiffWorker.postMessage({ type: "equal", time: time, data1: lastImageFrame.imageData, data2: imageData, colorTolerance: 60, pixelTolerance: 100 });
     });
 };
-
-//var displayEqualities = (freezings: Occurrence[]) => {
-//    var continuousFreezing: Continuity[] = [];
-//    var movedLastTime = true;
-//    var last: Continuity;
-//    freezings.forEach((freezing) => {
-//        if (!freezing.isOccured) {
-//            movedLastTime = true;
-//            return;
-//        }
-
-//        if (movedLastTime) {
-//            if (last) {
-//                last.duration = parseFloat((last.end - last.start).toFixed(3));
-//                if (last.duration < 1.5)
-//                    continuousFreezing.pop();
-//            }
-//            last = { start: parseFloat(freezing.watched.toFixed(3)), end: parseFloat(freezing.judged.toFixed(3)) };
-//            continuousFreezing.push(last);
-//        }
-//        else
-//            last.end = parseFloat(freezing.judged.toFixed(3));
-
-//        movedLastTime = false;
-//    });
-//    last.duration = parseFloat((last.end - last.start).toFixed(3));
-//    return continuousFreezing.map((freezing) => { return JSON.stringify(freezing); }).join("\r\n")
-//        + "\r\n\r\n" + getTotalDuration(continuousFreezing);
-//}
-
-//var getTotalDuration = (continuities: Continuity[]) => {
-//    var total = 0;
-//    continuities.forEach((continuity) => {
-//        total += continuity.duration;
-//    });
-//    return total;
-//}

@@ -33,6 +33,8 @@
                     return MJPEGReader.read(blob);
                 }).then(function (video) {
                     _this._src = video;
+                    return _this._show(0);
+                }).then(function () {
                     if (_this.onloadedmetadata)
                         _this.onloadedmetadata(_this._createEvent());
                 });

@@ -1,7 +1,6 @@
 var MemoryBox = (function () {
     function MemoryBox() {
         this.canvas = document.createElement("canvas");
-        this.image = document.createElement("img");
         this.canvasContext = this.canvas.getContext("2d");
     }
     return MemoryBox;
@@ -28,12 +27,6 @@ if (!window.setImmediate) {
 
 var imageDiffWorker = new Worker("imagediffworker.js");
 
-var getImageDataFromBlob = function (file, width, height, crop) {
-    memoryBox.image.src = URL.createObjectURL(file, { oneTimeOnly: true });
-
-    return exportImageDataFromImage(memoryBox.image, width, height, crop);
-};
-
 var promiseImmediate = function () {
     return new Promise(function (resolve, reject) {
         window.setImmediate(function () {
@@ -42,11 +35,6 @@ var promiseImmediate = function () {
     });
 };
 
-/*
-TODO
-fix loadMJPEG to use VideoPlayable interface
-no getFrame in HTMLVideoElement, should make equivalent method (with canvas)
-*/
 var loadVideo = function (file) {
     if (videoControl) {
         videoControl.pause();
@@ -72,7 +60,6 @@ var loadVideo = function (file) {
     videoControl.src = URL.createObjectURL(file);
 
     return VideoElementExtension.waitMetadata(videoControl).then(function () {
-        return startAnalyze();
     });
 };
 
@@ -159,37 +146,4 @@ var equal = function (time, imageData) {
         imageDiffWorker.postMessage({ type: "equal", time: time, data1: lastImageFrame.imageData, data2: imageData, colorTolerance: 60, pixelTolerance: 100 });
     });
 };
-//var displayEqualities = (freezings: Occurrence[]) => {
-//    var continuousFreezing: Continuity[] = [];
-//    var movedLastTime = true;
-//    var last: Continuity;
-//    freezings.forEach((freezing) => {
-//        if (!freezing.isOccured) {
-//            movedLastTime = true;
-//            return;
-//        }
-//        if (movedLastTime) {
-//            if (last) {
-//                last.duration = parseFloat((last.end - last.start).toFixed(3));
-//                if (last.duration < 1.5)
-//                    continuousFreezing.pop();
-//            }
-//            last = { start: parseFloat(freezing.watched.toFixed(3)), end: parseFloat(freezing.judged.toFixed(3)) };
-//            continuousFreezing.push(last);
-//        }
-//        else
-//            last.end = parseFloat(freezing.judged.toFixed(3));
-//        movedLastTime = false;
-//    });
-//    last.duration = parseFloat((last.end - last.start).toFixed(3));
-//    return continuousFreezing.map((freezing) => { return JSON.stringify(freezing); }).join("\r\n")
-//        + "\r\n\r\n" + getTotalDuration(continuousFreezing);
-//}
-//var getTotalDuration = (continuities: Continuity[]) => {
-//    var total = 0;
-//    continuities.forEach((continuity) => {
-//        total += continuity.duration;
-//    });
-//    return total;
-//}
 //# sourceMappingURL=app.js.map

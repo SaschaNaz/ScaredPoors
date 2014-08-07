@@ -16,12 +16,14 @@
         this.pause();
         this._src = null;
         this._srcUrl = url;
-            
+
         if (url.length > 0)
             this._getBlobFromUrl(url)
                 .then((blob) => MJPEGReader.read(blob))
                 .then((video) => {
                     this._src = video;
+                    return this._show(0);
+                }).then(() => {
                     if (this.onloadedmetadata)
                         this.onloadedmetadata(this._createEvent());
                 });

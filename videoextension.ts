@@ -1,5 +1,5 @@
-﻿class VideoElementExtension {
-    static waitMetadata(video: VideoPlayable) {
+﻿module VideoElementExtension {
+    export function waitMetadata(video: VideoPlayable) {
         if (video.duration)
             return Promise.resolve<void>();
 
@@ -10,4 +10,4 @@
             };
         });
     }
-} 
+}
