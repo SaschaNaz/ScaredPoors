@@ -64,7 +64,7 @@
     }
 
     /** 
-    Expects `active`, `stopped`, `frozen`.
+    Expects `active`, `stopped`, or `frozen`.
     */
     private _presentStatus(status: string) {
         switch (status) {

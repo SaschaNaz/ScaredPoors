@@ -21,6 +21,12 @@ span {
     font-style: italic;
 }
 
+#panel {
+    touch-action: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 #presenter video, #presenter img {
     -ms-grid-row-align: center;
     -ms-grid-column-align: center;
@@ -42,7 +48,7 @@ span {
         background-color: #FF4977;
     }
 
-#targetArea {
+.targetArea {
     position: absolute;
     border: 2px solid #6080FF;
     background-color: #6D91FF;

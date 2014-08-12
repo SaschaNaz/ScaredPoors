@@ -6,21 +6,6 @@ var MemoryBox = (function () {
     return MemoryBox;
 })();
 
-var UIManipulations = (function () {
-    function UIManipulations() {
-    }
-    UIManipulations.loadFile = function () {
-        videoInput.click();
-    };
-    UIManipulations.setTargetAreaStartPoint = function (e) {
-    };
-    UIManipulations.modifyTargetAreaEndPoint = function (e) {
-    };
-    UIManipulations.hideTargetArea = function () {
-    };
-    return UIManipulations;
-})();
-
 var videoPresenter = null;
 var videoControl = null;
 
@@ -77,7 +62,7 @@ var loadVideo = function (file) {
     videoControl.src = URL.createObjectURL(file);
 
     return VideoElementExtension.waitMetadata(videoControl).then(function () {
-        //pointer events, with offsetLeft and offsetTop
+        var dragPresenter = new DragPresenter(panel, videoPresenter, "targetArea");
     });
 };
 

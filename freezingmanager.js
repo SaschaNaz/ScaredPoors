@@ -71,7 +71,7 @@
     };
 
     /**
-    Expects `active`, `stopped`, `frozen`.
+    Expects `active`, `stopped`, or `frozen`.
     */
     FreezingManager.prototype._presentStatus = function (status) {
         switch (status) {

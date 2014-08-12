@@ -14,13 +14,13 @@
     <script src="scaredpoors.js"></script>
     <script src="videoextension.js"></script>
     <script src="freezingmanager.js"></script>
+    <script src="dragmanager.js"></script>
     <script src="mjpegplayer.js"></script>
     <script src="app.js"></script>
 </head>
 <body style="display: -ms-grid; -ms-grid-rows: 1fr 28px; -ms-grid-columns: 1fr;">
     <input id="videoInput" type="file" onchange="loadVideo(event.target.files[0])" style="display: none;" />
     <div id="presenter" style="z-index: -1; position: relative; display: -ms-grid; -ms-grid-rows: 1fr; -ms-grid-columns: 1fr;">
-        <div id="targetArea" style="display: none;"></div>
         <video id="videoNativeElement" style="display: none;"></video>
     </div>
     <div id="panel" onclick="videoInput.click()">

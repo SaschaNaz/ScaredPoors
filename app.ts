@@ -6,20 +6,6 @@ class MemoryBox {
     }
 }
 
-class UIManipulations {
-    static loadFile = () => {
-        videoInput.click();
-    };
-    static setTargetAreaStartPoint = (e: PointerEvent) => {
-        
-    };
-    static modifyTargetAreaEndPoint = (e: PointerEvent) => {
-    };
-    static hideTargetArea = () => {
-    };
-
-}
-
 var videoPresenter: HTMLElement = null;
 var videoControl: VideoPlayable = null;
 
@@ -28,7 +14,7 @@ var lastImageFrame: FrameData;
 var loadedArrayBuffer: ArrayBuffer;
 var memoryBox = new MemoryBox();
 //var occurrences: Occurrence[] = [];
-interface ImageCropInfomation {
+interface ImageCropInformation {
     offsetX: number;
     offsetY: number;
     width: number;
@@ -94,12 +80,12 @@ var loadVideo = (file: Blob) => {
     videoControl.src = URL.createObjectURL(file);
 
     return VideoElementExtension.waitMetadata(videoControl).then(() => {
-        //pointer events, with offsetLeft and offsetTop
+        var dragPresenter = new DragPresenter(panel, videoPresenter, "targetArea");
     });
 };
 
 var startAnalyze = () => {
-    var crop: ImageCropInfomation = {
+    var crop: ImageCropInformation = {
         offsetX: 139,
         offsetY: 236,
         width: 309,
@@ -137,7 +123,7 @@ var startAnalyze = () => {
     //});
 };
 
-var getFrameImageData = (time: number, originalWidth: number, originalHeight: number, crop: ImageCropInfomation) => {
+var getFrameImageData = (time: number, originalWidth: number, originalHeight: number, crop: ImageCropInformation) => {
     return new Promise<ImageData>((resolve, reject) => {
         videoControl.onseeked = () => {
             videoControl.onseeked = null;
@@ -155,7 +141,7 @@ var getFrameImageData = (time: number, originalWidth: number, originalHeight: nu
     });
 }
 
-var exportImageDataFromImage = (img: HTMLImageElement, width: number, height: number, crop: ImageCropInfomation) => {
+var exportImageDataFromImage = (img: HTMLImageElement, width: number, height: number, crop: ImageCropInformation) => {
     return new Promise<ImageData>((resolve, reject) => {
         var sequence = promiseImmediate();
         var asyncOperation = () => {

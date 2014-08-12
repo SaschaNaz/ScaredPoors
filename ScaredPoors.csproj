@@ -24,6 +24,7 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="app.ts" />
+    <TypeScriptCompile Include="dragmanager.ts" />
     <TypeScriptCompile Include="freezingmanager.ts" />
     <TypeScriptCompile Include="html.d.ts" />
     <TypeScriptCompile Include="mjpegplayer.ts" />
