@@ -2,7 +2,8 @@
     /**
     targetElement should have `position: relative` and areaClassName class should have `position: absolute`.
     */
-    function DragPresenter(panel, targetElement, areaClassName) {
+    function DragPresenter(panel, targetElement, areaClassName, borderSize) {
+        if (typeof borderSize === "undefined") { borderSize = 0; }
         var _this = this;
         this.panel = panel;
         this.targetElement = targetElement;
@@ -11,12 +12,17 @@
         this._widthPercentage = 0;
         this._heightPercentage = 0;
         this._onpointerdown = function (e) {
-            _this._offsetX = e.offsetX - _this.targetElement.offsetLeft;
-            _this._offsetY = e.offsetY - _this.targetElement.offsetTop;
+            var eX = _this.forceInRange(e.offsetX, _this.targetElement.offsetLeft, _this.targetElement.clientWidth);
+            var eY = _this.forceInRange(e.offsetY, _this.targetElement.offsetTop, _this.targetElement.clientHeight);
+            if (e.offsetX != eX || e.offsetY != eY)
+                return;
+
+            _this._offsetX = eX - _this.targetElement.offsetLeft;
+            _this._offsetY = eY - _this.targetElement.offsetTop;
 
             var areaPresenter = _this.areaPresenter;
-            areaPresenter.style.left = e.offsetX + 'px';
-            areaPresenter.style.top = e.offsetY + 'px';
+            areaPresenter.style.left = eX + 'px';
+            areaPresenter.style.top = eY + 'px';
             areaPresenter.style.width = areaPresenter.style.height = '0';
             areaPresenter.style.display = "block";
 
@@ -24,8 +30,10 @@
             _this.panel.onpointerup = _this._onpointerup;
         };
         this._onpointermove = function (e) {
-            _this._width = e.offsetX - _this._offsetX - _this.targetElement.offsetLeft;
-            _this._height = e.offsetY - _this._offsetY - _this.targetElement.offsetTop;
+            var eX = _this.forceInRange(e.offsetX, _this.targetElement.offsetLeft, _this.targetElement.clientWidth);
+            var eY = _this.forceInRange(e.offsetY, _this.targetElement.offsetTop, _this.targetElement.clientHeight);
+            _this._width = eX - _this._offsetX - _this.targetElement.offsetLeft;
+            _this._height = eY - _this._offsetY - _this.targetElement.offsetTop;
 
             _this._draw();
         };
@@ -38,6 +46,7 @@
         var areaPresenter = this.areaPresenter = document.createElement("div");
         if (areaClassName)
             areaPresenter.className = areaClassName;
+        this._borderSize = borderSize;
         areaPresenter.style.display = "none";
         targetElement.parentElement.appendChild(areaPresenter);
         panel.onpointerdown = this._onpointerdown;
@@ -85,11 +94,15 @@
         configurable: true
     });
 
+    DragPresenter.prototype.forceInRange = function (value, min, rangeLength) {
+        return Math.min(Math.max(value, min), min + rangeLength);
+    };
+
     DragPresenter.prototype._draw = function () {
         var drawArea = this._getPanelArea();
         var areaPresenter = this.areaPresenter;
-        areaPresenter.style.left = drawArea.left + 'px';
-        areaPresenter.style.top = drawArea.top + 'px';
+        areaPresenter.style.left = (drawArea.left - this._borderSize) + 'px';
+        areaPresenter.style.top = (drawArea.top - this._borderSize) + 'px';
         areaPresenter.style.width = drawArea.width + 'px';
         areaPresenter.style.height = drawArea.height + 'px';
     };
@@ -107,6 +120,11 @@
             width: Math.abs(this._width),
             height: Math.abs(this._height)
         };
+    };
+    DragPresenter.prototype.close = function () {
+        window.onresize = null;
+        this.panel.onpointerdown = this.panel.onpointermove = this.panel.onpointerup = null;
+        this.targetElement.parentElement.removeChild(this.areaPresenter);
     };
     return DragPresenter;
 })();

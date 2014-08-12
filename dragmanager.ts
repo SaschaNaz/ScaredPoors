@@ -30,14 +30,16 @@
     private set _height(value: number) {
         this._heightPercentage = value / this.targetElement.clientHeight;
     }
+    private _borderSize: number;
 
     /**
     targetElement should have `position: relative` and areaClassName class should have `position: absolute`.
     */
-    constructor(public panel: HTMLElement, public targetElement: HTMLElement, areaClassName?: string) {
+    constructor(public panel: HTMLElement, public targetElement: HTMLElement, areaClassName?: string, borderSize = 0) {
         var areaPresenter = this.areaPresenter = document.createElement("div");
         if (areaClassName)
             areaPresenter.className = areaClassName;
+        this._borderSize = borderSize;
         areaPresenter.style.display = "none";
         targetElement.parentElement.appendChild(areaPresenter);
         panel.onpointerdown = this._onpointerdown;
@@ -46,12 +48,17 @@
     }
 
     private _onpointerdown = (e: PointerEvent) => {
-        this._offsetX = e.offsetX - this.targetElement.offsetLeft;
-        this._offsetY = e.offsetY - this.targetElement.offsetTop;
+        var eX = this.forceInRange(e.offsetX, this.targetElement.offsetLeft, this.targetElement.clientWidth);
+        var eY = this.forceInRange(e.offsetY, this.targetElement.offsetTop, this.targetElement.clientHeight);
+        if (e.offsetX != eX || e.offsetY != eY)
+            return;
+
+        this._offsetX = eX - this.targetElement.offsetLeft
+        this._offsetY = eY - this.targetElement.offsetTop;
 
         var areaPresenter = this.areaPresenter;
-        areaPresenter.style.left = e.offsetX + 'px';
-        areaPresenter.style.top = e.offsetY + 'px';
+        areaPresenter.style.left = eX + 'px';
+        areaPresenter.style.top = eY + 'px';
         areaPresenter.style.width = areaPresenter.style.height = '0';
         areaPresenter.style.display = "block";
 
@@ -60,11 +67,17 @@
     };
 
     private _onpointermove = (e: PointerEvent) => {
-        this._width = e.offsetX - this._offsetX - this.targetElement.offsetLeft;
-        this._height = e.offsetY - this._offsetY - this.targetElement.offsetTop;
+        var eX = this.forceInRange(e.offsetX, this.targetElement.offsetLeft, this.targetElement.clientWidth);
+        var eY = this.forceInRange(e.offsetY, this.targetElement.offsetTop, this.targetElement.clientHeight);
+        this._width = eX - this._offsetX - this.targetElement.offsetLeft;
+        this._height = eY - this._offsetY - this.targetElement.offsetTop;
 
         this._draw();
     };
+
+    private forceInRange(value: number, min: number, rangeLength: number) {
+        return Math.min(Math.max(value, min), min + rangeLength);
+    }
 
     private _onpointerup = (e: PointerEvent) => {
         this.panel.onpointermove = null;
@@ -76,8 +89,8 @@
     private _draw() {
         var drawArea = this._getPanelArea();
         var areaPresenter = this.areaPresenter;
-        areaPresenter.style.left = drawArea.left + 'px';
-        areaPresenter.style.top = drawArea.top + 'px';
+        areaPresenter.style.left = (drawArea.left - this._borderSize) + 'px';
+        areaPresenter.style.top = (drawArea.top - this._borderSize) + 'px';
         areaPresenter.style.width = drawArea.width + 'px';
         areaPresenter.style.height = drawArea.height + 'px';
     }
@@ -95,5 +108,10 @@
             width: Math.abs(this._width),
             height: Math.abs(this._height)
         }
+    }
+    close() {
+        window.onresize = null;
+        this.panel.onpointerdown = this.panel.onpointermove = this.panel.onpointerup = null;
+        this.targetElement.parentElement.removeChild(this.areaPresenter);
     }
 } 

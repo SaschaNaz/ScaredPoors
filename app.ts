@@ -1,3 +1,11 @@
+/*
+TODO:
+Change the text below the title as phase changes
+1. Load file
+2. Select target area
+3. Set the threshold value from user-measured reference length and subject volume
+*/
+
 class MemoryBox {
     canvas = document.createElement("canvas");
     canvasContext: CanvasRenderingContext2D;
@@ -80,7 +88,7 @@ var loadVideo = (file: Blob) => {
     videoControl.src = URL.createObjectURL(file);
 
     return VideoElementExtension.waitMetadata(videoControl).then(() => {
-        var dragPresenter = new DragPresenter(panel, videoPresenter, "targetArea");
+        var dragPresenter = new DragPresenter(panel, videoPresenter, "targetArea", 2);
     });
 };
 
@@ -120,7 +128,6 @@ var startAnalyze = () => {
         .then(() => {
              frozenRatioText.textContent = manager.frozenRatio.toFixed(2);
         });
-    //});
 };
 
 var getFrameImageData = (time: number, originalWidth: number, originalHeight: number, crop: ImageCropInformation) => {
