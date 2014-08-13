@@ -97,7 +97,7 @@ var loadVideo = (file: Blob) => {
         Open the options pages to adjust parameters.".replace(/\s\s+/g,"<br />");
         statusPresenter.onclick = () => {
             if (dragPresenter.isDragged) {
-                phaseText.style.display = "none";
+                phaseText.style.display = openOptions.style.display = "none";
                 analysisText.style.display = "";
                 dragPresenter.close();
                 startAnalyze(dragPresenter.getTargetArea());
