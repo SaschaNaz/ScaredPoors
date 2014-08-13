@@ -18,7 +18,6 @@ var videoControl = null;
 
 var analyzer = new ScaredPoors();
 var lastImageFrame;
-var loadedArrayBuffer;
 var memoryBox = new MemoryBox();
 
 
@@ -63,13 +62,15 @@ var loadVideo = function (file) {
                 videoPresenter = player.element;
                 break;
         }
-    } else
+    } else {
         videoPresenter = videoControl = videoNativeElement;
+        videoNativeElement.style.display = "block";
+    }
 
     videoControl.src = URL.createObjectURL(file);
 
     return VideoElementExtension.waitMetadata(videoControl).then(function () {
-        var dragPresenter = new DragPresenter(panel, videoPresenter, "targetArea", 2);
+        var dragPresenter = new DragPresenter(panel, videoPresenter, "targetArea");
     });
 };
 

@@ -3,15 +3,19 @@
     height: device-height;
 }
 
-html {
-    width: 100%;
-    height: 100%;
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
 }
 
 body {
-    margin: 8px;
-    width: calc(100% - 16px);
-    height: calc(100% - 16px);
     background-color: black;
     color: white;
     font-family: 'Segoe UI', sans-serif;
@@ -36,7 +40,6 @@ span {
 
 #statusPresenter {
     margin: 8px 0 0 0;
-    height: calc(100% - 8px);
 }
     #statusPresenter.active {
         background-color: #FFF9D8;

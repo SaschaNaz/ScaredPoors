@@ -30,16 +30,16 @@
     private set _height(value: number) {
         this._heightPercentage = value / this.targetElement.clientHeight;
     }
-    private _borderSize: number;
+    private _capturedPointerId: number;
 
     /**
     targetElement should have `position: relative` and areaClassName class should have `position: absolute`.
+    areaClassName should have `box-sizing: border-box`.
     */
-    constructor(public panel: HTMLElement, public targetElement: HTMLElement, areaClassName?: string, borderSize = 0) {
+    constructor(public panel: HTMLElement, public targetElement: HTMLElement, areaClassName?: string) {
         var areaPresenter = this.areaPresenter = document.createElement("div");
         if (areaClassName)
             areaPresenter.className = areaClassName;
-        this._borderSize = borderSize;
         areaPresenter.style.display = "none";
         targetElement.parentElement.appendChild(areaPresenter);
         panel.onpointerdown = this._onpointerdown;
@@ -62,6 +62,8 @@
         areaPresenter.style.width = areaPresenter.style.height = '0';
         areaPresenter.style.display = "block";
 
+        this._capturedPointerId = e.pointerId;
+        this.panel.setPointerCapture(e.pointerId);
         this.panel.onpointermove = this._onpointermove;
         this.panel.onpointerup = this._onpointerup;
     };
@@ -80,7 +82,8 @@
     }
 
     private _onpointerup = (e: PointerEvent) => {
-        this.panel.onpointermove = null;
+        this.panel.releasePointerCapture(this._capturedPointerId);
+        this.panel.onpointermove = this.panel.onpointerup = null;
     };
 
     private _onresize = (e: UIEvent) => {
@@ -89,8 +92,8 @@
     private _draw() {
         var drawArea = this._getPanelArea();
         var areaPresenter = this.areaPresenter;
-        areaPresenter.style.left = (drawArea.left - this._borderSize) + 'px';
-        areaPresenter.style.top = (drawArea.top - this._borderSize) + 'px';
+        areaPresenter.style.left = drawArea.left + 'px';
+        areaPresenter.style.top = drawArea.top + 'px';
         areaPresenter.style.width = drawArea.width + 'px';
         areaPresenter.style.height = drawArea.height + 'px';
     }
@@ -111,7 +114,7 @@
     }
     close() {
         window.onresize = null;
-        this.panel.onpointerdown = this.panel.onpointermove = this.panel.onpointerup = null;
+        this.panel.onpointerdown = this.panel.onpointermove = this.panel.onpointerup = window.onpointerleave =   null;
         this.targetElement.parentElement.removeChild(this.areaPresenter);
     }
 } 

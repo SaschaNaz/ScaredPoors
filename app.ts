@@ -19,7 +19,6 @@ var videoControl: VideoPlayable = null;
 
 var analyzer = new ScaredPoors();
 var lastImageFrame: FrameData;
-var loadedArrayBuffer: ArrayBuffer;
 var memoryBox = new MemoryBox();
 //var occurrences: Occurrence[] = [];
 interface ImageCropInformation {
@@ -82,13 +81,15 @@ var loadVideo = (file: Blob) => {
                 break;
         }
     }
-    else
+    else {
         videoPresenter = videoControl = videoNativeElement;
+        videoNativeElement.style.display = "block";
+    }
     
     videoControl.src = URL.createObjectURL(file);
 
     return VideoElementExtension.waitMetadata(videoControl).then(() => {
-        var dragPresenter = new DragPresenter(panel, videoPresenter, "targetArea", 2);
+        var dragPresenter = new DragPresenter(panel, videoPresenter, "targetArea");
     });
 };
 
