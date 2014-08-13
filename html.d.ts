@@ -8,3 +8,9 @@ declare var elapsedTimeText: HTMLSpanElement;
 declare var videoInput: HTMLInputElement;
 declare var panel: HTMLDivElement;
 declare var targetArea: HTMLDivElement;
+
+declare var phaseText: HTMLParagraphElement;
+declare var analysisText: HTMLParagraphElement;
+declare var videoSlider: HTMLInputElement;
+declare var openOptions: HTMLSpanElement;
+declare var options: HTMLDivElement;

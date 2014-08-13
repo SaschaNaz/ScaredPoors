@@ -32,6 +32,10 @@
     }
     private _capturedPointerId: number;
 
+    get isDragged() {
+        return this.areaPresenter.style.display !== "none";
+    }
+
     /**
     targetElement should have `position: relative` and areaClassName class should have `position: absolute`.
     areaClassName should have `box-sizing: border-box`.

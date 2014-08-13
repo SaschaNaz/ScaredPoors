@@ -96,6 +96,14 @@
         configurable: true
     });
 
+    Object.defineProperty(DragPresenter.prototype, "isDragged", {
+        get: function () {
+            return this.areaPresenter.style.display !== "none";
+        },
+        enumerable: true,
+        configurable: true
+    });
+
     DragPresenter.prototype.forceInRange = function (value, min, rangeLength) {
         return Math.min(Math.max(value, min), min + rangeLength);
     };

@@ -64,23 +64,29 @@ var loadVideo = function (file) {
         }
     } else {
         videoPresenter = videoControl = videoNativeElement;
-        videoNativeElement.style.display = "block";
+        videoNativeElement.style.display = "";
     }
 
     videoControl.src = URL.createObjectURL(file);
 
     return VideoElementExtension.waitMetadata(videoControl).then(function () {
+        openOptions.style.display = "";
         var dragPresenter = new DragPresenter(panel, videoPresenter, "targetArea");
+        phaseText.innerHTML = "Drag the screen to specify the analysis target area.\
+        Then, click the bottom bar to proceed.\
+        Open the options pages to adjust parameters.".replace(/\s\s+/g, "<br />");
+        statusPresenter.onclick = function () {
+            if (dragPresenter.isDragged) {
+                phaseText.style.display = "none";
+                analysisText.style.display = "";
+                dragPresenter.close();
+                startAnalyze(dragPresenter.getTargetArea());
+            }
+        };
     });
 };
 
-var startAnalyze = function () {
-    var crop = {
-        offsetX: 139,
-        offsetY: 236,
-        width: 309,
-        height: 133
-    };
+var startAnalyze = function (crop) {
     memoryBox.canvas.width = crop.width;
     memoryBox.canvas.height = crop.height;
     var manager = new FreezingManager();
@@ -114,7 +120,7 @@ var getFrameImageData = function (time, originalWidth, originalHeight, crop) {
         videoControl.onseeked = function () {
             videoControl.onseeked = null;
             if (videoControl === videoPresenter) {
-                memoryBox.canvasContext.drawImage(videoPresenter, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
+                memoryBox.canvasContext.drawImage(videoPresenter, crop.left, crop.top, crop.width, crop.height, 0, 0, crop.width, crop.height);
                 resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
             } else {
                 exportImageDataFromImage(videoPresenter, originalWidth, originalHeight, crop).then(function (imageData) {
@@ -129,19 +135,18 @@ var getFrameImageData = function (time, originalWidth, originalHeight, crop) {
 
 var exportImageDataFromImage = function (img, width, height, crop) {
     return new Promise(function (resolve, reject) {
-        var sequence = promiseImmediate();
         var asyncOperation = function () {
             if (!img.complete) {
-                sequence.then(promiseImmediate).then(asyncOperation);
+                promiseImmediate().then(asyncOperation);
                 return;
             }
 
             if (img.naturalWidth !== width || img.naturalHeight !== height)
                 console.warn(["Different image size is detected.", img.naturalWidth, width, img.naturalHeight, height].join(" "));
-            memoryBox.canvasContext.drawImage(img, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
+            memoryBox.canvasContext.drawImage(img, crop.left, crop.top, crop.width, crop.height, 0, 0, crop.width, crop.height);
             resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
         };
-        sequence.then(asyncOperation);
+        promiseImmediate().then(asyncOperation);
     });
 };
 
@@ -153,7 +158,10 @@ var equal = function (time, imageData) {
                 resolve(e.data);
         };
         imageDiffWorker.addEventListener("message", callback);
-        imageDiffWorker.postMessage({ type: "equal", time: time, data1: lastImageFrame.imageData, data2: imageData, colorTolerance: 60, pixelTolerance: 100 });
+        imageDiffWorker.postMessage({
+            type: "equal", time: time,
+            data1: lastImageFrame.imageData, data2: imageData, colorTolerance: 60, pixelTolerance: 100
+        });
     });
 };
 //# sourceMappingURL=app.js.map

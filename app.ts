@@ -21,9 +21,9 @@ var analyzer = new ScaredPoors();
 var lastImageFrame: FrameData;
 var memoryBox = new MemoryBox();
 //var occurrences: Occurrence[] = [];
-interface ImageCropInformation {
-    offsetX: number;
-    offsetY: number;
+interface Area {
+    left: number;
+    top: number;
     width: number;
     height: number;
 }
@@ -83,23 +83,30 @@ var loadVideo = (file: Blob) => {
     }
     else {
         videoPresenter = videoControl = videoNativeElement;
-        videoNativeElement.style.display = "block";
+        videoNativeElement.style.display = "";
     }
     
     videoControl.src = URL.createObjectURL(file);
 
     return VideoElementExtension.waitMetadata(videoControl).then(() => {
+        openOptions.style.display = "";
         var dragPresenter = new DragPresenter(panel, videoPresenter, "targetArea");
+        phaseText.innerHTML = 
+        "Drag the screen to specify the analysis target area.\
+        Then, click the bottom bar to proceed.\
+        Open the options pages to adjust parameters.".replace(/\s\s+/g,"<br />");
+        statusPresenter.onclick = () => {
+            if (dragPresenter.isDragged) {
+                phaseText.style.display = "none";
+                analysisText.style.display = "";
+                dragPresenter.close();
+                startAnalyze(dragPresenter.getTargetArea());
+            }
+        };
     });
 };
 
-var startAnalyze = () => {
-    var crop: ImageCropInformation = {
-        offsetX: 139,
-        offsetY: 236,
-        width: 309,
-        height: 133
-    }
+var startAnalyze = (crop: Area) => {
     memoryBox.canvas.width = crop.width;
     memoryBox.canvas.height = crop.height;
     var manager = new FreezingManager();
@@ -131,12 +138,13 @@ var startAnalyze = () => {
         });
 };
 
-var getFrameImageData = (time: number, originalWidth: number, originalHeight: number, crop: ImageCropInformation) => {
+var getFrameImageData = (time: number, originalWidth: number, originalHeight: number, crop: Area) => {
     return new Promise<ImageData>((resolve, reject) => {
         videoControl.onseeked = () => {
             videoControl.onseeked = null;
             if (videoControl === <any>videoPresenter) {
-                memoryBox.canvasContext.drawImage(videoPresenter, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
+                memoryBox.canvasContext.drawImage(videoPresenter,
+                    crop.left, crop.top, crop.width, crop.height, 0, 0, crop.width, crop.height);
                 resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
             }
             else {
@@ -149,22 +157,21 @@ var getFrameImageData = (time: number, originalWidth: number, originalHeight: nu
     });
 }
 
-var exportImageDataFromImage = (img: HTMLImageElement, width: number, height: number, crop: ImageCropInformation) => {
+var exportImageDataFromImage = (img: HTMLImageElement, width: number, height: number, crop: Area) => {
     return new Promise<ImageData>((resolve, reject) => {
-        var sequence = promiseImmediate();
         var asyncOperation = () => {
             if (!img.complete) {
-                sequence.then(promiseImmediate).then(asyncOperation);
+                promiseImmediate().then(asyncOperation);
                 return;
             }
 
             if (img.naturalWidth !== width
                 || img.naturalHeight !== height)
                 console.warn(["Different image size is detected.", img.naturalWidth, width, img.naturalHeight, height].join(" "));
-            memoryBox.canvasContext.drawImage(img, crop.offsetX, crop.offsetY, crop.width, crop.height, 0, 0, crop.width, crop.height);
+            memoryBox.canvasContext.drawImage(img, crop.left, crop.top, crop.width, crop.height, 0, 0, crop.width, crop.height);
             resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
         };
-        sequence.then(asyncOperation);
+        promiseImmediate().then(asyncOperation);
     });
 };
 
@@ -176,6 +183,9 @@ var equal = (time: number, imageData: ImageData) => {
                 resolve(e.data);
         };
         imageDiffWorker.addEventListener("message", callback);
-        imageDiffWorker.postMessage({ type: "equal", time: time, data1: lastImageFrame.imageData, data2: imageData, colorTolerance: 60, pixelTolerance: 100 });
+        imageDiffWorker.postMessage({
+            type: "equal", time: time,
+            data1: lastImageFrame.imageData, data2: imageData, colorTolerance: 60, pixelTolerance: 100
+        });
     });
 };
