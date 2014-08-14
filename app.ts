@@ -90,11 +90,13 @@ var loadVideo = (file: Blob) => {
 
     return VideoElementExtension.waitMetadata(videoControl).then(() => {
         openOptions.style.display = areaText.style.display = "";
-        var dragPresenter = new DragPresenter(panel, videoPresenter, "targetArea");
+        videoSlider.max = videoControl.duration.toString();
         phaseText.innerHTML =
         "Drag the screen to specify the analysis target area.\
         Then, click the bottom bar to proceed.\
         Open the options pages to adjust parameters.".replace(/\s\s+/g, "<br />");
+
+        var dragPresenter = new DragPresenter(panel, videoPresenter, "targetArea");
         var scaleToOriginal = (area: Area) => {
             var scaleX = videoControl.videoWidth / videoPresenter.clientWidth;
             var scaleY = videoControl.videoHeight / videoPresenter.clientHeight;

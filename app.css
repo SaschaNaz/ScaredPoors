@@ -30,12 +30,6 @@ body {
         color: #2B78FF;
     }
 
-#options {
-    display: -ms-grid;
-    -ms-grid-rows: 1fr auto;
-    -ms-grid-columns: 1fr;
-}
-
 #panel {
     -ms-user-select: none;
     user-select: none;
@@ -61,6 +55,10 @@ body {
 #options {
     -ms-grid-row-align: center;
     -ms-grid-column-align: center;
+
+    display: -ms-grid;
+    -ms-grid-rows: 1fr auto;
+    -ms-grid-columns: 1fr;
     background-color: #24217A;
     opacity: 0.8;
     width: 400px;

@@ -25,7 +25,7 @@
     </div>
     <div id="panel" onclick="videoInput.click()">
         <h1>Scareds</h1>
-        <span id="openOptions" class="textButton" style="display: none;" onclick="options.style.display = ''; requestAnimationFrame(function () { options.style.opacity = 1; })">Options</span>
+        <span id="openOptions" class="textButton" style="display: none;" onclick="options.style.display = ''; requestAnimationFrame(function () { options.style.opacity = 0.8; })">Options</span>
         <p id="phaseText">
             Click the screen to load a video file.
         </p>
@@ -45,7 +45,7 @@
         <div>
             <input id="videoSlider" type="range" onchange="videoControl.currentTime = this.value;" value="0" />
         </div>
-        <span class="textButton" style="-ms-grid-column: 2; -ms-grid-column-align: center" onclick="options.style.display = 'none'; requestAnimationFrame(function () { options.style.opacity = 0; })">Close</span>
+        <div class="textButton" style="-ms-grid-row: 2; -ms-grid-column-align: center" onclick="options.style.display = 'none'; requestAnimationFrame(function () { options.style.opacity = 0; })">Close</div>
     </div>
 
     <div style="-ms-grid-row: 2;" id="statusPresenter" class="active"></div>
