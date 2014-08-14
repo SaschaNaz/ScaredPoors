@@ -10,4 +10,13 @@
             };
         });
     }
+    export function seekFor(video: VideoPlayable, time: number) {
+        return new Promise<void>((resolve, reject) => {
+            videoControl.onseeked = () => {
+                videoControl.onseeked = null;
+                resolve(undefined);
+            };
+            videoControl.currentTime = time;
+        });
+    }
 }

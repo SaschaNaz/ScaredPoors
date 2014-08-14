@@ -22,8 +22,8 @@ var lastImageFrame: FrameData;
 var memoryBox = new MemoryBox();
 //var occurrences: Occurrence[] = [];
 interface Area {
-    left: number;
-    top: number;
+    x: number;
+    y: number;
     width: number;
     height: number;
 }
@@ -89,27 +89,54 @@ var loadVideo = (file: Blob) => {
     videoControl.src = URL.createObjectURL(file);
 
     return VideoElementExtension.waitMetadata(videoControl).then(() => {
-        openOptions.style.display = "";
+        openOptions.style.display = areaText.style.display = "";
         var dragPresenter = new DragPresenter(panel, videoPresenter, "targetArea");
-        phaseText.innerHTML = 
+        phaseText.innerHTML =
         "Drag the screen to specify the analysis target area.\
         Then, click the bottom bar to proceed.\
-        Open the options pages to adjust parameters.".replace(/\s\s+/g,"<br />");
+        Open the options pages to adjust parameters.".replace(/\s\s+/g, "<br />");
+        var scaleToOriginal = (area: Area) => {
+            var scaleX = videoControl.videoWidth / videoPresenter.clientWidth;
+            var scaleY = videoControl.videoHeight / videoPresenter.clientHeight;
+            return {
+                x: Math.round(area.x * scaleX),
+                y: Math.round(area.y * scaleY),
+                width: Math.round(area.width * scaleX),
+                height: Math.round(area.height * scaleY)
+            };
+        };
+
+        dragPresenter.ondragsizechanged = (area) => {
+            area = scaleToOriginal(area);
+            areaXText.textContent = area.x.toFixed();
+            areaYText.textContent = area.y.toFixed();
+            areaWidthText.textContent = area.width.toFixed();
+            areaHeightText.textContent = area.height.toFixed();
+        };
+
         statusPresenter.onclick = () => {
             if (dragPresenter.isDragged) {
-                phaseText.style.display = openOptions.style.display = "none";
+                phaseText.style.display = openOptions.style.display = areaText.style.display = "none";
                 analysisText.style.display = "";
                 dragPresenter.close();
-                startAnalyze(dragPresenter.getTargetArea());
+                startAnalyze(scaleToOriginal(dragPresenter.getTargetArea()));
             }
         };
     });
 };
 
 var startAnalyze = (crop: Area) => {
+    //crop = {
+    //    x: 139,
+    //    y: 236,
+    //    width: 309,
+    //    height: 133
+    //}
     memoryBox.canvas.width = crop.width;
     memoryBox.canvas.height = crop.height;
     var manager = new FreezingManager();
+    //var threshold = 100;
+    var threshold = Math.round(crop.width * crop.height * 2.43e-3);
 
     var sequence = getFrameImageData(0, videoControl.videoWidth, videoControl.videoHeight, crop)
         .then((imageData) => {
@@ -123,9 +150,8 @@ var startAnalyze = (crop: Area) => {
                 .then(() => getFrameImageData(time, videoControl.videoWidth, videoControl.videoHeight, crop))
                 .then((_imageData) => {
                     imageData = _imageData;
-                    return equal(videoControl.currentTime, imageData);
-                })
-                .then((equality) => {
+                    return equal(videoControl.currentTime, imageData, threshold);
+                }).then((equality) => {
                     manager.loadOccurrence({ watched: lastImageFrame.time, judged: equality.time, isOccured: equality.isEqual });
                     lastImageFrame = { time: videoControl.currentTime, imageData: imageData };
                 });
@@ -139,12 +165,11 @@ var startAnalyze = (crop: Area) => {
 };
 
 var getFrameImageData = (time: number, originalWidth: number, originalHeight: number, crop: Area) => {
-    return new Promise<ImageData>((resolve, reject) => {
-        videoControl.onseeked = () => {
-            videoControl.onseeked = null;
+    return VideoElementExtension.seekFor(videoControl, time)
+        .then(() => new Promise<ImageData>((resolve, reject) => {
             if (videoControl === <any>videoPresenter) {
                 memoryBox.canvasContext.drawImage(videoPresenter,
-                    crop.left, crop.top, crop.width, crop.height, 0, 0, crop.width, crop.height);
+                    crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
                 resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
             }
             else {
@@ -152,9 +177,7 @@ var getFrameImageData = (time: number, originalWidth: number, originalHeight: nu
                     .then((imageData) => resolve(imageData));
                 //draw image, as getImageData does.
             }
-        };
-        videoControl.currentTime = time;
-    });
+        }));
 }
 
 var exportImageDataFromImage = (img: HTMLImageElement, width: number, height: number, crop: Area) => {
@@ -168,14 +191,14 @@ var exportImageDataFromImage = (img: HTMLImageElement, width: number, height: nu
             if (img.naturalWidth !== width
                 || img.naturalHeight !== height)
                 console.warn(["Different image size is detected.", img.naturalWidth, width, img.naturalHeight, height].join(" "));
-            memoryBox.canvasContext.drawImage(img, crop.left, crop.top, crop.width, crop.height, 0, 0, crop.width, crop.height);
+            memoryBox.canvasContext.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
             resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
         };
         promiseImmediate().then(asyncOperation);
     });
 };
 
-var equal = (time: number, imageData: ImageData) => {
+var equal = (time: number, imageData: ImageData, pixelTolerance: number) => {
     return new Promise<Equality>((resolve, reject) => {
         var callback = (e: MessageEvent) => {
             imageDiffWorker.removeEventListener("message", callback);
@@ -185,7 +208,7 @@ var equal = (time: number, imageData: ImageData) => {
         imageDiffWorker.addEventListener("message", callback);
         imageDiffWorker.postMessage({
             type: "equal", time: time,
-            data1: lastImageFrame.imageData, data2: imageData, colorTolerance: 60, pixelTolerance: 100
+            data1: lastImageFrame.imageData, data2: imageData, colorTolerance: 60, pixelTolerance: pixelTolerance
         });
     });
 };

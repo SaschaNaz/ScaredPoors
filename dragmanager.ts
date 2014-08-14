@@ -6,6 +6,8 @@
     private _widthPercentage = 0;
     private _heightPercentage = 0;
 
+    ondragsizechanged: (dragArea: Area) => any;
+
     private get _offsetX() {
         return this._offsetXPercentage * this.targetElement.clientWidth;
     }
@@ -70,6 +72,9 @@
         this.panel.setPointerCapture(e.pointerId);
         this.panel.onpointermove = this._onpointermove;
         this.panel.onpointerup = this._onpointerup;
+
+        if (this.ondragsizechanged)
+            this.ondragsizechanged({ x: 0, y: 0, width: 0, height: 0 }); 
     };
 
     private _onpointermove = (e: PointerEvent) => {
@@ -79,6 +84,8 @@
         this._height = eY - this._offsetY - this.targetElement.offsetTop;
 
         this._draw();
+        if (this.ondragsizechanged)
+            this.ondragsizechanged(this.getTargetArea());
     };
 
     private forceInRange(value: number, min: number, rangeLength: number) {
@@ -96,22 +103,22 @@
     private _draw() {
         var drawArea = this._getPanelArea();
         var areaPresenter = this.areaPresenter;
-        areaPresenter.style.left = drawArea.left + 'px';
-        areaPresenter.style.top = drawArea.top + 'px';
+        areaPresenter.style.left = drawArea.x + 'px';
+        areaPresenter.style.top = drawArea.y + 'px';
         areaPresenter.style.width = drawArea.width + 'px';
         areaPresenter.style.height = drawArea.height + 'px';
     }
     private _getPanelArea() {
         var targetArea = this.getTargetArea();
-        targetArea.left += this.targetElement.offsetLeft;
-        targetArea.top += this.targetElement.offsetTop;
+        targetArea.x += this.targetElement.offsetLeft;
+        targetArea.y += this.targetElement.offsetTop;
 
         return targetArea;
     }
     getTargetArea() {
-        return {
-            left: Math.min(this._offsetX, this._offsetX + this._width),
-            top: Math.min(this._offsetY, this._offsetY + this._height),
+        return <Area>{
+            x: Math.min(this._offsetX, this._offsetX + this._width),
+            y: Math.min(this._offsetY, this._offsetY + this._height),
             width: Math.abs(this._width),
             height: Math.abs(this._height)
         }

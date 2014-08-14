@@ -25,20 +25,27 @@
     </div>
     <div id="panel" onclick="videoInput.click()">
         <h1>Scareds</h1>
-        <span id="openOptions" class="textButton" style="display: none;" onclick="options.style.display = '';">Options</span>
+        <span id="openOptions" class="textButton" style="display: none;" onclick="options.style.display = ''; requestAnimationFrame(function () { options.style.opacity = 1; })">Options</span>
         <p id="phaseText">
             Click the screen to load a video file.
         </p>
+        <p id="areaText" style="display: none;">
+            X: <span id="areaXText"></span><br />
+            Y: <span id="areaYText"></span><br />
+            Width: <span id="areaWidthText"></span><br />
+            Height: <span id="areaHeightText"></span><br />
+        </p>
         <p id="analysisText" style="display: none;">
-            Total elapsed time: <span id="elapsedTimeText" class="italic">0</span><br />
-            Total frozen time: <span id="frozenTimeText" class="italic">0</span><br />
-            Ratio: <span id="frozenRatioText" class="italic">Pending...</span>
+            Total elapsed time: <span id="elapsedTimeText">0</span><br />
+            Total frozen time: <span id="frozenTimeText">0</span><br />
+            Ratio: <span id="frozenRatioText">Pending...</span>
         </p>
     </div>
     <div id="options" style="display: none;">
-        <input id="videoSlider" type="range" onchange="videoControl.currentTime = this.value;" value="0" />
-
-        <span class="textButton" onclick="options.style.display = 'none';">Close</span>
+        <div>
+            <input id="videoSlider" type="range" onchange="videoControl.currentTime = this.value;" value="0" />
+        </div>
+        <span class="textButton" style="-ms-grid-column: 2; -ms-grid-column-align: center" onclick="options.style.display = 'none'; requestAnimationFrame(function () { options.style.opacity = 0; })">Close</span>
     </div>
 
     <div style="-ms-grid-row: 2;" id="statusPresenter" class="active"></div>

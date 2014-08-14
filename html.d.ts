@@ -14,3 +14,9 @@ declare var analysisText: HTMLParagraphElement;
 declare var videoSlider: HTMLInputElement;
 declare var openOptions: HTMLSpanElement;
 declare var options: HTMLDivElement;
+
+declare var areaText: HTMLParagraphElement;
+declare var areaXText: HTMLSpanElement;
+declare var areaYText: HTMLSpanElement;
+declare var areaWidthText: HTMLSpanElement;
+declare var areaHeightText: HTMLSpanElement;

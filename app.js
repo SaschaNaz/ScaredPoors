@@ -1,4 +1,4 @@
-/*
+﻿/*
 TODO:
 Change the text below the title as phase changes
 1. Load file
@@ -70,26 +70,54 @@ var loadVideo = function (file) {
     videoControl.src = URL.createObjectURL(file);
 
     return VideoElementExtension.waitMetadata(videoControl).then(function () {
-        openOptions.style.display = "";
+        openOptions.style.display = areaText.style.display = "";
         var dragPresenter = new DragPresenter(panel, videoPresenter, "targetArea");
         phaseText.innerHTML = "Drag the screen to specify the analysis target area.\
         Then, click the bottom bar to proceed.\
         Open the options pages to adjust parameters.".replace(/\s\s+/g, "<br />");
+        var scaleToOriginal = function (area) {
+            var scaleX = videoControl.videoWidth / videoPresenter.clientWidth;
+            var scaleY = videoControl.videoHeight / videoPresenter.clientHeight;
+            return {
+                x: Math.round(area.x * scaleX),
+                y: Math.round(area.y * scaleY),
+                width: Math.round(area.width * scaleX),
+                height: Math.round(area.height * scaleY)
+            };
+        };
+
+        dragPresenter.ondragsizechanged = function (area) {
+            area = scaleToOriginal(area);
+            areaXText.textContent = area.x.toFixed();
+            areaYText.textContent = area.y.toFixed();
+            areaWidthText.textContent = area.width.toFixed();
+            areaHeightText.textContent = area.height.toFixed();
+        };
+
         statusPresenter.onclick = function () {
             if (dragPresenter.isDragged) {
-                phaseText.style.display = openOptions.style.display = "none";
+                phaseText.style.display = openOptions.style.display = areaText.style.display = "none";
                 analysisText.style.display = "";
                 dragPresenter.close();
-                startAnalyze(dragPresenter.getTargetArea());
+                startAnalyze(scaleToOriginal(dragPresenter.getTargetArea()));
             }
         };
     });
 };
 
 var startAnalyze = function (crop) {
+    //crop = {
+    //    x: 139,
+    //    y: 236,
+    //    width: 309,
+    //    height: 133
+    //}
     memoryBox.canvas.width = crop.width;
     memoryBox.canvas.height = crop.height;
     var manager = new FreezingManager();
+
+    //var threshold = 100;
+    var threshold = Math.round(crop.width * crop.height * 2.43e-3);
 
     var sequence = getFrameImageData(0, videoControl.videoWidth, videoControl.videoHeight, crop).then(function (imageData) {
         lastImageFrame = { time: videoControl.currentTime, imageData: imageData };
@@ -102,7 +130,7 @@ var startAnalyze = function (crop) {
                 return getFrameImageData(time, videoControl.videoWidth, videoControl.videoHeight, crop);
             }).then(function (_imageData) {
                 imageData = _imageData;
-                return equal(videoControl.currentTime, imageData);
+                return equal(videoControl.currentTime, imageData, threshold);
             }).then(function (equality) {
                 manager.loadOccurrence({ watched: lastImageFrame.time, judged: equality.time, isOccured: equality.isEqual });
                 lastImageFrame = { time: videoControl.currentTime, imageData: imageData };
@@ -116,11 +144,10 @@ var startAnalyze = function (crop) {
 };
 
 var getFrameImageData = function (time, originalWidth, originalHeight, crop) {
-    return new Promise(function (resolve, reject) {
-        videoControl.onseeked = function () {
-            videoControl.onseeked = null;
+    return VideoElementExtension.seekFor(videoControl, time).then(function () {
+        return new Promise(function (resolve, reject) {
             if (videoControl === videoPresenter) {
-                memoryBox.canvasContext.drawImage(videoPresenter, crop.left, crop.top, crop.width, crop.height, 0, 0, crop.width, crop.height);
+                memoryBox.canvasContext.drawImage(videoPresenter, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
                 resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
             } else {
                 exportImageDataFromImage(videoPresenter, originalWidth, originalHeight, crop).then(function (imageData) {
@@ -128,8 +155,7 @@ var getFrameImageData = function (time, originalWidth, originalHeight, crop) {
                 });
                 //draw image, as getImageData does.
             }
-        };
-        videoControl.currentTime = time;
+        });
     });
 };
 
@@ -143,14 +169,14 @@ var exportImageDataFromImage = function (img, width, height, crop) {
 
             if (img.naturalWidth !== width || img.naturalHeight !== height)
                 console.warn(["Different image size is detected.", img.naturalWidth, width, img.naturalHeight, height].join(" "));
-            memoryBox.canvasContext.drawImage(img, crop.left, crop.top, crop.width, crop.height, 0, 0, crop.width, crop.height);
+            memoryBox.canvasContext.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
             resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
         };
         promiseImmediate().then(asyncOperation);
     });
 };
 
-var equal = function (time, imageData) {
+var equal = function (time, imageData, pixelTolerance) {
     return new Promise(function (resolve, reject) {
         var callback = function (e) {
             imageDiffWorker.removeEventListener("message", callback);
@@ -160,7 +186,7 @@ var equal = function (time, imageData) {
         imageDiffWorker.addEventListener("message", callback);
         imageDiffWorker.postMessage({
             type: "equal", time: time,
-            data1: lastImageFrame.imageData, data2: imageData, colorTolerance: 60, pixelTolerance: 100
+            data1: lastImageFrame.imageData, data2: imageData, colorTolerance: 60, pixelTolerance: pixelTolerance
         });
     });
 };

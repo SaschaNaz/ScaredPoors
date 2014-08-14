@@ -30,6 +30,9 @@
             _this.panel.setPointerCapture(e.pointerId);
             _this.panel.onpointermove = _this._onpointermove;
             _this.panel.onpointerup = _this._onpointerup;
+
+            if (_this.ondragsizechanged)
+                _this.ondragsizechanged({ x: 0, y: 0, width: 0, height: 0 });
         };
         this._onpointermove = function (e) {
             var eX = _this.forceInRange(e.offsetX, _this.targetElement.offsetLeft, _this.targetElement.clientWidth);
@@ -38,6 +41,8 @@
             _this._height = eY - _this._offsetY - _this.targetElement.offsetTop;
 
             _this._draw();
+            if (_this.ondragsizechanged)
+                _this.ondragsizechanged(_this.getTargetArea());
         };
         this._onpointerup = function (e) {
             _this.panel.releasePointerCapture(_this._capturedPointerId);
@@ -111,22 +116,22 @@
     DragPresenter.prototype._draw = function () {
         var drawArea = this._getPanelArea();
         var areaPresenter = this.areaPresenter;
-        areaPresenter.style.left = drawArea.left + 'px';
-        areaPresenter.style.top = drawArea.top + 'px';
+        areaPresenter.style.left = drawArea.x + 'px';
+        areaPresenter.style.top = drawArea.y + 'px';
         areaPresenter.style.width = drawArea.width + 'px';
         areaPresenter.style.height = drawArea.height + 'px';
     };
     DragPresenter.prototype._getPanelArea = function () {
         var targetArea = this.getTargetArea();
-        targetArea.left += this.targetElement.offsetLeft;
-        targetArea.top += this.targetElement.offsetTop;
+        targetArea.x += this.targetElement.offsetLeft;
+        targetArea.y += this.targetElement.offsetTop;
 
         return targetArea;
     };
     DragPresenter.prototype.getTargetArea = function () {
         return {
-            left: Math.min(this._offsetX, this._offsetX + this._width),
-            top: Math.min(this._offsetY, this._offsetY + this._height),
+            x: Math.min(this._offsetX, this._offsetX + this._width),
+            y: Math.min(this._offsetY, this._offsetY + this._height),
             width: Math.abs(this._width),
             height: Math.abs(this._height)
         };

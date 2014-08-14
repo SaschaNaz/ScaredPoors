@@ -22,24 +22,27 @@ body {
     touch-action: none;
 }
 
-span.italic {
-    font-style: italic;
-}
-
 .textButton {
     font-size: large;
     color: #60A0FF;
-    display: block;
 }
     .textButton:hover {
         color: #2B78FF;
     }
-    
+
+#options {
+    display: -ms-grid;
+    -ms-grid-rows: 1fr auto;
+    -ms-grid-columns: 1fr;
+}
 
 #panel {
     -ms-user-select: none;
     user-select: none;
 }
+    #panel h1, #panel p {
+        pointer-events: none;
+    }
 
 #presenter {
     z-index: -1;
