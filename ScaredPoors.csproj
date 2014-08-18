@@ -27,7 +27,6 @@
     <TypeScriptCompile Include="dragmanager.ts" />
     <TypeScriptCompile Include="freezingmanager.ts" />
     <TypeScriptCompile Include="html.d.ts" />
-    <TypeScriptCompile Include="mjpegplayer.ts" />
     <TypeScriptCompile Include="scaredpoors.ts" />
     <TypeScriptCompile Include="imagediffworker.ts" />
     <TypeScriptCompile Include="scareds.ts" />
