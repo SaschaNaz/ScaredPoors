@@ -78,7 +78,7 @@
                 if (source !== this._srcUrl) // source is changed
                     return reject(new Error("Play cancelled"));
 
-                promiseImmediate().then(next);
+                PromiseExtensions.immediate().then(next);
             };
             next();
         });
@@ -101,11 +101,11 @@
                     targetTime = referenceVideoTime + 0.1; // limit the delay to 0.1 s (100 ms)
                 }
                 if (targetTime < this._src.duration)
-                    this._show(targetTime).then(promiseImmediate).then(next);
+                    this._show(targetTime).then(PromiseExtensions.immediate).then(next);
                 else
                     this._show(this._src.duration);
             };
-            promiseImmediate().then(next);
+            PromiseExtensions.immediate().then(next);
         });
     }
     pause() {

@@ -6,20 +6,11 @@ Change the text below the title as phase changes
 3. Set the threshold value from user-measured reference length and subject volume
 */
 
-class MemoryBox {
-    canvas = document.createElement("canvas");
-    canvasContext: CanvasRenderingContext2D;
-    constructor() {
-        this.canvasContext = this.canvas.getContext("2d");
-    }
-}
-
 var videoPresenter: HTMLElement = null;
 var videoControl: VideoPlayable = null;
 
 var analyzer = new ScaredPoors();
 var lastImageFrame: FrameData;
-var memoryBox = new MemoryBox();
 //var occurrences: Occurrence[] = [];
 interface Area {
     x: number;
@@ -127,8 +118,6 @@ var startAnalyze = (crop: Area) => {
     //    width: 309,
     //    height: 133
     //}
-    memoryBox.canvas.width = crop.width;
-    memoryBox.canvas.height = crop.height;
     var manager = new FreezingManager();
     //var threshold = 100;
     var threshold = Math.round(crop.width * crop.height * 2.43e-3);
@@ -161,28 +150,14 @@ var startAnalyze = (crop: Area) => {
 
 var getFrameImageData = (time: number, originalWidth: number, originalHeight: number, crop: Area) => {
     return VideoElementExtensions.seekFor(videoControl, time)
-        .then(() => new Promise<ImageData>((resolve, reject) => {
-            if (videoControl === <any>videoPresenter) {
-                memoryBox.canvasContext.drawImage(videoPresenter,
-                    crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
-                resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
+        .then(() => {
+            if (videoPresenter instanceof HTMLVideoElement) {
+                return WindowExtensions.createImageData(videoPresenter, crop.x, crop.y, crop.width, crop.height);
             }
             else {
-                exportImageDataFromImage(<HTMLImageElement>videoPresenter, originalWidth, originalHeight, crop)
-                    .then((imageData) => resolve(imageData));
-                //draw image, as getImageData does.
+                return ImageElementExtensions.waitCompletion(<HTMLImageElement>videoPresenter)
+                    .then(() => WindowExtensions.createImageData(videoPresenter, crop.x, crop.y, crop.width, crop.height));
             }
-        }));
-}
-
-var exportImageDataFromImage = (img: HTMLImageElement, width: number, height: number, crop: Area) => {
-    return ImageElementExtensions.waitCompletion(img)
-        .then(() => {
-            if (img.naturalWidth !== width
-                || img.naturalHeight !== height)
-                console.warn(["Different image size is detected.", img.naturalWidth, width, img.naturalHeight, height].join(" "));
-            memoryBox.canvasContext.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
-            return memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height);
         });
 };
 

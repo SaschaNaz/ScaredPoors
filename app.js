@@ -5,20 +5,11 @@ Change the text below the title as phase changes
 2. Select target area
 3. Set the threshold value from user-measured reference length and subject volume
 */
-var MemoryBox = (function () {
-    function MemoryBox() {
-        this.canvas = document.createElement("canvas");
-        this.canvasContext = this.canvas.getContext("2d");
-    }
-    return MemoryBox;
-})();
-
 var videoPresenter = null;
 var videoControl = null;
 
 var analyzer = new ScaredPoors();
 var lastImageFrame;
-var memoryBox = new MemoryBox();
 
 
 if (!window.setImmediate) {
@@ -106,8 +97,6 @@ var startAnalyze = function (crop) {
     //    width: 309,
     //    height: 133
     //}
-    memoryBox.canvas.width = crop.width;
-    memoryBox.canvas.height = crop.height;
     var manager = new FreezingManager();
 
     //var threshold = 100;
@@ -139,26 +128,13 @@ var startAnalyze = function (crop) {
 
 var getFrameImageData = function (time, originalWidth, originalHeight, crop) {
     return VideoElementExtensions.seekFor(videoControl, time).then(function () {
-        return new Promise(function (resolve, reject) {
-            if (videoControl === videoPresenter) {
-                memoryBox.canvasContext.drawImage(videoPresenter, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
-                resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
-            } else {
-                exportImageDataFromImage(videoPresenter, originalWidth, originalHeight, crop).then(function (imageData) {
-                    return resolve(imageData);
-                });
-                //draw image, as getImageData does.
-            }
-        });
-    });
-};
-
-var exportImageDataFromImage = function (img, width, height, crop) {
-    return ImageElementExtensions.waitCompletion(img).then(function () {
-        if (img.naturalWidth !== width || img.naturalHeight !== height)
-            console.warn(["Different image size is detected.", img.naturalWidth, width, img.naturalHeight, height].join(" "));
-        memoryBox.canvasContext.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
-        return memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height);
+        if (videoPresenter instanceof HTMLVideoElement) {
+            return WindowExtensions.createImageData(videoPresenter, crop.x, crop.y, crop.width, crop.height);
+        } else {
+            return ImageElementExtensions.waitCompletion(videoPresenter).then(function () {
+                return WindowExtensions.createImageData(videoPresenter, crop.x, crop.y, crop.width, crop.height);
+            });
+        }
     });
 };
 

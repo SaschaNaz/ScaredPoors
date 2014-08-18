@@ -94,7 +94,7 @@
                 if (source !== _this._srcUrl)
                     return reject(new Error("Play cancelled"));
 
-                promiseImmediate().then(next);
+                PromiseExtensions.immediate().then(next);
             };
             next();
         });
@@ -118,11 +118,11 @@
                     targetTime = referenceVideoTime + 0.1; // limit the delay to 0.1 s (100 ms)
                 }
                 if (targetTime < _this._src.duration)
-                    _this._show(targetTime).then(promiseImmediate).then(next);
+                    _this._show(targetTime).then(PromiseExtensions.immediate).then(next);
                 else
                     _this._show(_this._src.duration);
             };
-            promiseImmediate().then(next);
+            PromiseExtensions.immediate().then(next);
         });
     };
     MJPEGPlayer.prototype.pause = function () {
