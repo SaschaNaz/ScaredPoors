@@ -27,6 +27,7 @@
     <TypeScriptCompile Include="dragmanager.ts" />
     <TypeScriptCompile Include="freezingmanager.ts" />
     <TypeScriptCompile Include="html.d.ts" />
+    <TypeScriptCompile Include="imagebitmap.ts" />
     <TypeScriptCompile Include="mjpegplayer.ts" />
     <TypeScriptCompile Include="scaredpoors.ts" />
     <TypeScriptCompile Include="imagediffworker.ts" />
@@ -34,7 +35,7 @@
     <TypeScriptCompile Include="submodules\es6-promises.d.ts" />
     <TypeScriptCompile Include="submodules\mjpegdecoder\mjpegdecoder.d.ts" />
     <TypeScriptCompile Include="submodules\streams\streams.d.ts" />
-    <TypeScriptCompile Include="videoextension.ts" />
+    <TypeScriptCompile Include="extensions.ts" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="submodules\streams\streams.js.map" />

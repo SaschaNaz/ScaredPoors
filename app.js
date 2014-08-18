@@ -33,14 +33,6 @@ if (!window.setImmediate) {
 
 var imageDiffWorker = new Worker("imagediffworker.js");
 
-var promiseImmediate = function () {
-    return new Promise(function (resolve, reject) {
-        window.setImmediate(function () {
-            resolve(undefined);
-        });
-    });
-};
-
 var loadVideo = function (file) {
     panel.onclick = null;
 
@@ -69,7 +61,7 @@ var loadVideo = function (file) {
 
     videoControl.src = URL.createObjectURL(file);
 
-    return VideoElementExtension.waitMetadata(videoControl).then(function () {
+    return VideoElementExtensions.waitMetadata(videoControl).then(function () {
         openOptions.style.display = areaText.style.display = "";
         videoSlider.max = videoControl.duration.toString();
         phaseText.innerHTML = "Drag the screen to specify the analysis target area.\
@@ -146,7 +138,7 @@ var startAnalyze = function (crop) {
 };
 
 var getFrameImageData = function (time, originalWidth, originalHeight, crop) {
-    return VideoElementExtension.seekFor(videoControl, time).then(function () {
+    return VideoElementExtensions.seekFor(videoControl, time).then(function () {
         return new Promise(function (resolve, reject) {
             if (videoControl === videoPresenter) {
                 memoryBox.canvasContext.drawImage(videoPresenter, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
@@ -162,19 +154,11 @@ var getFrameImageData = function (time, originalWidth, originalHeight, crop) {
 };
 
 var exportImageDataFromImage = function (img, width, height, crop) {
-    return new Promise(function (resolve, reject) {
-        var asyncOperation = function () {
-            if (!img.complete) {
-                promiseImmediate().then(asyncOperation);
-                return;
-            }
-
-            if (img.naturalWidth !== width || img.naturalHeight !== height)
-                console.warn(["Different image size is detected.", img.naturalWidth, width, img.naturalHeight, height].join(" "));
-            memoryBox.canvasContext.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
-            resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
-        };
-        promiseImmediate().then(asyncOperation);
+    return ImageElementExtensions.waitCompletion(img).then(function () {
+        if (img.naturalWidth !== width || img.naturalHeight !== height)
+            console.warn(["Different image size is detected.", img.naturalWidth, width, img.naturalHeight, height].join(" "));
+        memoryBox.canvasContext.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
+        return memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height);
     });
 };
 

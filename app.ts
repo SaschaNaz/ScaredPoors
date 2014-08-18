@@ -52,13 +52,6 @@ if (!window.setImmediate) {
 
 var imageDiffWorker = new Worker("imagediffworker.js");
 
-var promiseImmediate = () =>
-    new Promise<void>((resolve, reject) => {
-        window.setImmediate(() => {
-            resolve(undefined);
-        });
-    });
-
 var loadVideo = (file: Blob) => {
     panel.onclick = null;
 
@@ -88,7 +81,7 @@ var loadVideo = (file: Blob) => {
     
     videoControl.src = URL.createObjectURL(file);
 
-    return VideoElementExtension.waitMetadata(videoControl).then(() => {
+    return VideoElementExtensions.waitMetadata(videoControl).then(() => {
         openOptions.style.display = areaText.style.display = "";
         videoSlider.max = videoControl.duration.toString();
         phaseText.innerHTML =
@@ -167,7 +160,7 @@ var startAnalyze = (crop: Area) => {
 };
 
 var getFrameImageData = (time: number, originalWidth: number, originalHeight: number, crop: Area) => {
-    return VideoElementExtension.seekFor(videoControl, time)
+    return VideoElementExtensions.seekFor(videoControl, time)
         .then(() => new Promise<ImageData>((resolve, reject) => {
             if (videoControl === <any>videoPresenter) {
                 memoryBox.canvasContext.drawImage(videoPresenter,
@@ -183,21 +176,14 @@ var getFrameImageData = (time: number, originalWidth: number, originalHeight: nu
 }
 
 var exportImageDataFromImage = (img: HTMLImageElement, width: number, height: number, crop: Area) => {
-    return new Promise<ImageData>((resolve, reject) => {
-        var asyncOperation = () => {
-            if (!img.complete) {
-                promiseImmediate().then(asyncOperation);
-                return;
-            }
-
+    return ImageElementExtensions.waitCompletion(img)
+        .then(() => {
             if (img.naturalWidth !== width
                 || img.naturalHeight !== height)
                 console.warn(["Different image size is detected.", img.naturalWidth, width, img.naturalHeight, height].join(" "));
             memoryBox.canvasContext.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
-            resolve(memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height));
-        };
-        promiseImmediate().then(asyncOperation);
-    });
+            return memoryBox.canvasContext.getImageData(0, 0, crop.width, crop.height);
+        });
 };
 
 var equal = (time: number, imageData: ImageData, pixelTolerance: number) => {
