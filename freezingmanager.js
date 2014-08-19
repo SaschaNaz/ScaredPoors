@@ -28,10 +28,10 @@
         configurable: true
     });
 
-    FreezingManager.prototype.loadOccurrence = function (occurrence) {
-        this._elapsedTime = occurrence.judged;
+    FreezingManager.prototype.loadStopping = function (stopping) {
+        this._elapsedTime = stopping.judged;
         this._presentElapsedTime(this._elapsedTime);
-        if (!occurrence.isOccured) {
+        if (!stopping.isOccured) {
             this._presentStatus("active");
             this._movedLastTime = true;
             return;
@@ -47,12 +47,12 @@
                     this._totalFrozenTime += this._lastStoppingDuration;
             }
             this._lastStopping = {
-                start: occurrence.watched,
-                end: occurrence.judged
+                start: stopping.watched,
+                end: stopping.judged
             };
             this._continuousFreezing.push(this._lastStopping);
         } else {
-            this._lastStopping.end = occurrence.judged;
+            this._lastStopping.end = stopping.judged;
             if (this._lastStoppingDuration >= this.minimalDuration) {
                 this._presentStatus("frozen");
                 this._presentFrozenTime(this._totalFrozenTime + this._lastStoppingDuration);

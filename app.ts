@@ -136,7 +136,7 @@ var startAnalyze = (crop: Area) => {
                     imageData = _imageData;
                     return equal(videoControl.currentTime, imageData, threshold);
                 }).then((equality) => {
-                    manager.loadOccurrence({ watched: lastImageFrame.time, judged: equality.time, isOccured: equality.isEqual });
+                    manager.loadStopping({ watched: lastImageFrame.time, judged: equality.time, isOccured: equality.isEqual });
                     lastImageFrame = { time: videoControl.currentTime, imageData: imageData };
                 });
         })(time);

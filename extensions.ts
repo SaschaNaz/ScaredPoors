@@ -54,6 +54,8 @@ module WindowExtensions {
     var canvas = document.createElement("canvas");
     var canvasContext = canvas.getContext("2d");
 
+    export function createImageData(image: any): Promise<ImageData>;
+    export function createImageData(image: any, sx: number, sy: number, width: number, height: number): Promise<ImageData>;
     export function createImageData(image: any, sx = 0, sy = 0, width?: number, height?: number) {
         return Promise.resolve().then(() => {
             var prefix = getLengthPrefix(image);

@@ -115,7 +115,7 @@ var startAnalyze = function (crop) {
                 imageData = _imageData;
                 return equal(videoControl.currentTime, imageData, threshold);
             }).then(function (equality) {
-                manager.loadOccurrence({ watched: lastImageFrame.time, judged: equality.time, isOccured: equality.isEqual });
+                manager.loadStopping({ watched: lastImageFrame.time, judged: equality.time, isOccured: equality.isEqual });
                 lastImageFrame = { time: videoControl.currentTime, imageData: imageData };
             });
         })(time);
