@@ -117,11 +117,14 @@ var startAnalyze = function (crop) {
             }).then(function (equality) {
                 manager.loadStopping({ watched: lastImageFrame.time, judged: equality.time, isOccured: equality.isEqual });
                 lastImageFrame = { time: videoControl.currentTime, imageData: imageData };
+            }).catch(function (error) {
+                error;
             });
         })(time);
     }
 
     return sequence.then(function () {
+        manager.flushInput();
         frozenRatioText.textContent = manager.frozenRatio.toFixed(2);
     });
 };

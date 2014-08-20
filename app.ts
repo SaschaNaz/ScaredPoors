@@ -138,13 +138,16 @@ var startAnalyze = (crop: Area) => {
                 }).then((equality) => {
                     manager.loadStopping({ watched: lastImageFrame.time, judged: equality.time, isOccured: equality.isEqual });
                     lastImageFrame = { time: videoControl.currentTime, imageData: imageData };
+                }).catch((error) => {
+                    error;
                 });
         })(time);
     }
 
     return sequence
         .then(() => {
-             frozenRatioText.textContent = manager.frozenRatio.toFixed(2);
+            manager.flushInput();
+            frozenRatioText.textContent = manager.frozenRatio.toFixed(2);
         });
 };
 

@@ -28,14 +28,22 @@
         }
         return stopping;
     }
+    private get _lastStoppingWithinDuration() {
+        var stopping = this.observingDuration; // Assuming there is no movement
+        for (var i = this._latestMovements.length - 1; i >= 0; i--) {
+            var item = this._latestMovements[i];
+            if (stopping <= item.judged)
+                stopping = item.watched; // Movement occured at that time, delaying
+            else
+                break;
+        }
+        return stopping;
+    }
     get frozenRatio() {
-        if (!this._lastStopping)
+        // Assume that stoppings are already flushed
+        if (!this._continuousFreezing.length)
             return 0;
-        var frozen = this._totalFrozenTime;
-        if (!this._isFrozen && this._lastStoppingDuration > this.observingDuration) // last stopping is not yet added while it is long enough
-            frozen += this._lastStoppingDuration;
-
-        return frozen / this._elapsedTime;
+        return this._totalFrozenTime / this._elapsedTime;
     }
 
     observingDuration = 1.5;
@@ -49,27 +57,31 @@
         if (!stopping.isOccured)
             this._latestMovements.push(stopping);
 
-        if (this._latestMovingDuration <= this.observingDuration * 0.1) {
-            this._lastStopping = { start: this._firstStoppingWithinDuration, end: stopping.judged };
-            this._continuousFreezing.push(this._lastStopping);
+        if (this._elapsedTime >= this.observingDuration &&
+            this._latestMovingDuration <= this.observingDuration * 0.1) {
 
-            //presenting time
-            return;
+            if (this._wasDefreezedLastTime)
+                this._lastStopping = { start: this._firstStoppingWithinDuration, end: stopping.judged };
+            else
+                this._lastStopping.end = stopping.judged;
 
-
-            this._wasDefreezedLastTime = false;
-            this._presentStatus("frozen");
+            if (this._lastStoppingDuration >= this.observingDuration) {
+                this._presentFrozenTime(this._totalFrozenTime + this._lastStopping.end - this._lastStopping.start);
+                this._wasDefreezedLastTime = false;
+                this._presentStatus("frozen");
+                this._log();
+                return;
+            }
         }
 
-        if (!this._wasDefreezedLastTime) {
-            // fixing end time
-        }
-
+        this.flushInput();
         this._wasDefreezedLastTime = true;
         if (stopping.isOccured)
-            this._presentStatus("stopping");
+            this._presentStatus("stopped");
         else
             this._presentStatus("active");
+
+        this._log();
         //if (!stopping.isOccured) {
         //    this._presentStatus("active");
         //    this._movedLastTime = true;
@@ -102,6 +114,17 @@
         //this._movedLastTime = false;
     }
 
+    flushInput() {
+        if (this._wasDefreezedLastTime)
+            return;
+        this._lastStopping.end = this._lastStoppingWithinDuration;
+
+        if (this._lastStoppingDuration >= this.observingDuration) {
+            this._continuousFreezing.push(this._lastStopping);
+            this._totalFrozenTime += this._lastStopping.end - this._lastStopping.start;
+        }
+    }
+
     private _clearOldMovements() {
         while (this._latestMovements[0] && this._latestMovements[0].judged <= this._elapsedTime - 1.5)
             this._latestMovements.shift();
@@ -129,4 +152,26 @@
                 throw new Error("Unexpected keyword");
         }
     }
+
+    private _log() {
+        var log = this._latestMovements.length + ' ' + this._elapsedTime.toFixed(2) + ' ' + this._totalFrozenTime.toFixed(2);
+        var array = new Array<boolean>(15);
+        array.fill(false);
+        this._latestMovements.forEach((movement) => {
+            array[Math.round((movement.watched - Math.max(this._elapsedTime - this.observingDuration, 0)) * 10)] = true;
+        });
+        log += ' ' + array.reduce<string>((previous, current) => previous + (current ? '|' : '-'), '');
+        console.log(log);
+    }
 }
+interface Array<T> {
+    reduce<U>(callbackfn: (previous: U, current: T, currentIndex: number, array: T[]) => U, initialValue: U): U;
+}
+interface Array<T> {
+    fill(value: T, start?: number, end?: number): void;
+}
+if (!Array.prototype.fill)
+    Array.prototype.fill = function (value: any, start = 0, end = this.length) {
+        for (var i = 0; i < this.length; i++)
+            this[i] = value;
+    }

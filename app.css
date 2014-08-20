@@ -35,6 +35,7 @@ body {
     user-select: none;
 }
     #panel h1, #panel p {
+        text-shadow: black 0 0 2px;
         pointer-events: none;
     }
 
