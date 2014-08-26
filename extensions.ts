@@ -1,4 +1,16 @@
-﻿module VideoElementExtensions {
+﻿module EventTargetExtensions {
+    export function waitEvent<T extends Event>(target: EventTarget, eventName: string) {
+        return new Promise<T>((resolve, reject) => {
+            var eventListener = (event: T) => {
+                target.removeEventListener(eventName, eventListener);
+                resolve(event);
+            };
+            target.addEventListener(eventName, eventListener);
+        });
+    }
+}
+
+module VideoElementExtensions {
     export function waitMetadata(video: VideoPlayable) {
         if (video.duration)
             return Promise.resolve<void>();
@@ -10,7 +22,7 @@
             };
         });
     }
-    export function seekFor(video: VideoPlayable, time: number) {
+    export function seek(video: VideoPlayable, time: number) {
         return new Promise<void>((resolve, reject) => {
             videoControl.onseeked = () => {
                 videoControl.onseeked = null;

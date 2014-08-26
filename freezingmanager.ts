@@ -1,5 +1,5 @@
 ﻿class FreezingManager {
-    private _continuousFreezing: Continuity[] = [];
+    freezingTimeline: Continuity[] = [];
     private _wasDefreezedLastTime = true;
     private _lastStopping: Continuity = null;
     private _isFrozen = true;
@@ -29,7 +29,7 @@
         return stopping;
     }
     private get _lastStoppingWithinDuration() {
-        var stopping = this.observingDuration; // Assuming there is no movement
+        var stopping = this._elapsedTime; // Assuming there is no movement
         for (var i = this._latestMovements.length - 1; i >= 0; i--) {
             var item = this._latestMovements[i];
             if (stopping <= item.judged)
@@ -41,7 +41,7 @@
     }
     get frozenRatio() {
         // Assume that stoppings are already flushed
-        if (!this._continuousFreezing.length)
+        if (!this.freezingTimeline.length)
             return 0;
         return this._totalFrozenTime / this._elapsedTime;
     }
@@ -58,7 +58,7 @@
             this._latestMovements.push(stopping);
 
         if (this._elapsedTime >= this.observingDuration &&
-            this._latestMovingDuration <= this.observingDuration * 0.1) {
+            this._latestMovingDuration <= this.observingDuration * 0.4) {
 
             if (this._wasDefreezedLastTime)
                 this._lastStopping = { start: this._firstStoppingWithinDuration, end: stopping.judged };
@@ -66,7 +66,8 @@
                 this._lastStopping.end = stopping.judged;
 
             if (this._lastStoppingDuration >= this.observingDuration) {
-                this._presentFrozenTime(this._totalFrozenTime + this._lastStopping.end - this._lastStopping.start);
+                var nonoverlap = this._getNonoverlapStopping(this._lastStopping)
+                this._presentFrozenTime(this._totalFrozenTime + nonoverlap.end - nonoverlap.start);
                 this._wasDefreezedLastTime = false;
                 this._presentStatus("frozen");
                 this._log();
@@ -82,47 +83,29 @@
             this._presentStatus("active");
 
         this._log();
-        //if (!stopping.isOccured) {
-        //    this._presentStatus("active");
-        //    this._movedLastTime = true;
-        //    return;
-        //}
-        
-        ////occured
-        //this._presentStatus("stopped");
-        //if (this._movedLastTime) {
-        //    if (this._lastStopping) {
-        //        if (this._lastStoppingDuration < this.minimalDuration) // too short stopping time, ignore it
-        //            this._continuousFreezing.pop();
-        //        else
-        //            this._totalFrozenTime += this._lastStoppingDuration;
-        //    }
-        //    this._lastStopping = {
-        //        start: stopping.watched,
-        //        end: stopping.judged
-        //    };
-        //    this._continuousFreezing.push(this._lastStopping);
-        //}
-        //else {
-        //    this._lastStopping.end = stopping.judged;
-        //    if (this._lastStoppingDuration >= this.minimalDuration) { // enough stopping time, continuing
-        //        this._presentStatus("frozen");
-        //        this._presentFrozenTime(this._totalFrozenTime + this._lastStoppingDuration);
-        //    }
-        //}
-
-        //this._movedLastTime = false;
     }
 
     flushInput() {
         if (this._wasDefreezedLastTime)
             return;
         this._lastStopping.end = this._lastStoppingWithinDuration;
+        var nonoverlap = this._getNonoverlapStopping(this._lastStopping);
 
-        if (this._lastStoppingDuration >= this.observingDuration) {
-            this._continuousFreezing.push(this._lastStopping);
-            this._totalFrozenTime += this._lastStopping.end - this._lastStopping.start;
-        }
+        if (nonoverlap.start !== this._lastStopping.start || this._lastStoppingDuration >= this.observingDuration)
+            this.freezingTimeline.push(nonoverlap);
+
+        this._totalFrozenTime += nonoverlap.end - nonoverlap.start;
+    }
+
+    private _getNonoverlapStopping(stopping: Continuity) {
+        var result: Continuity = { start: stopping.start, end: stopping.end };
+
+        var lastFreezing = this.freezingTimeline[this.freezingTimeline.length - 1];
+
+        if (lastFreezing && lastFreezing.end >= stopping.start)
+            result.start = lastFreezing.end;
+
+        return result;
     }
 
     private _clearOldMovements() {

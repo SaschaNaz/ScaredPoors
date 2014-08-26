@@ -100,7 +100,7 @@ var startAnalyze = function (crop) {
     var manager = new FreezingManager();
 
     //var threshold = 100;
-    var threshold = Math.round(crop.width * crop.height * 2.43e-3);
+    var threshold = Math.round(crop.width * crop.height * 1.2e-2);
 
     var sequence = getFrameImageData(0, videoControl.videoWidth, videoControl.videoHeight, crop).then(function (imageData) {
         lastImageFrame = { time: videoControl.currentTime, imageData: imageData };

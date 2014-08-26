@@ -105,13 +105,13 @@ var loadVideo = (file: Blob) => {
                 phaseText.style.display = openOptions.style.display = areaText.style.display = "none";
                 analysisText.style.display = "";
                 dragPresenter.close();
-                startAnalyze(scaleToOriginal(dragPresenter.getTargetArea()));
+                analyze(scaleToOriginal(dragPresenter.getTargetArea()));
             }
         };
     });
 };
 
-var startAnalyze = (crop: Area) => {
+var analyze = (crop: Area) => {
     //crop = {
     //    x: 139,
     //    y: 236,
@@ -120,7 +120,7 @@ var startAnalyze = (crop: Area) => {
     //}
     var manager = new FreezingManager();
     //var threshold = 100;
-    var threshold = Math.round(crop.width * crop.height * 2.43e-3);
+    var threshold = Math.round(crop.width * crop.height * 1.2e-2);
 
     var sequence = getFrameImageData(0, videoControl.videoWidth, videoControl.videoHeight, crop)
         .then((imageData) => {
@@ -148,11 +148,12 @@ var startAnalyze = (crop: Area) => {
         .then(() => {
             manager.flushInput();
             frozenRatioText.textContent = manager.frozenRatio.toFixed(2);
+            return manager.freezingTimeline;
         });
 };
 
 var getFrameImageData = (time: number, originalWidth: number, originalHeight: number, crop: Area) => {
-    return VideoElementExtensions.seekFor(videoControl, time)
+    return VideoElementExtensions.seek(videoControl, time)
         .then(() => {
             if (videoPresenter instanceof HTMLVideoElement) {
                 return WindowExtensions.createImageData(videoPresenter, crop.x, crop.y, crop.width, crop.height);

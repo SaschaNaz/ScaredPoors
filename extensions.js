@@ -1,4 +1,18 @@
-﻿var VideoElementExtensions;
+﻿var EventTargetExtensions;
+(function (EventTargetExtensions) {
+    function waitEvent(target, eventName) {
+        return new Promise(function (resolve, reject) {
+            var eventListener = function (event) {
+                target.removeEventListener(eventName, eventListener);
+                resolve(event);
+            };
+            target.addEventListener(eventName, eventListener);
+        });
+    }
+    EventTargetExtensions.waitEvent = waitEvent;
+})(EventTargetExtensions || (EventTargetExtensions = {}));
+
+var VideoElementExtensions;
 (function (VideoElementExtensions) {
     function waitMetadata(video) {
         if (video.duration)
@@ -12,7 +26,7 @@
         });
     }
     VideoElementExtensions.waitMetadata = waitMetadata;
-    function seekFor(video, time) {
+    function seek(video, time) {
         return new Promise(function (resolve, reject) {
             videoControl.onseeked = function () {
                 videoControl.onseeked = null;
@@ -21,7 +35,7 @@
             videoControl.currentTime = time;
         });
     }
-    VideoElementExtensions.seekFor = seekFor;
+    VideoElementExtensions.seek = seek;
 })(VideoElementExtensions || (VideoElementExtensions = {}));
 
 var ImageElementExtensions;
