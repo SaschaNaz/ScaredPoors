@@ -1,9 +1,9 @@
-﻿EventTargetExtensions.waitEvent(document, "DOMContentLoaded").then(function () {
-    var subscription = EventTargetExtensions.subscribeEvent(panel, "click", function () {
+﻿EventPromise.waitEvent(document, "DOMContentLoaded").then(function () {
+    var subscription = EventPromise.subscribeEvent(panel, "click", function () {
         videoInput.click();
     });
 
-    return EventTargetExtensions.waitEvent(videoInput, "change").then(subscription.cease);
+    return EventPromise.waitEvent(videoInput, "change").then(subscription.cease);
 }).then(function () {
     return loadVideo(videoInput.files[0]);
 }).then(function () {

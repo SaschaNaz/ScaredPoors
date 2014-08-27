@@ -1,10 +1,10 @@
-﻿EventTargetExtensions.waitEvent(document, "DOMContentLoaded")
+﻿EventPromise.waitEvent(document, "DOMContentLoaded")
     .then(() => {
-        var subscription = EventTargetExtensions.subscribeEvent(panel, "click", () => {
+        var subscription = EventPromise.subscribeEvent(panel, "click", () => {
             videoInput.click();
         });
 
-        return EventTargetExtensions.waitEvent(videoInput, "change").then(subscription.cease);
+        return EventPromise.waitEvent(videoInput, "change").then(subscription.cease);
     })
     .then(() => loadVideo(videoInput.files[0]))
     .then(() => VideoElementExtensions.waitMetadata(videoControl))

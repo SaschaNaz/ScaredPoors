@@ -1,40 +1,4 @@
-﻿var EventTargetExtensions;
-(function (EventTargetExtensions) {
-    function waitEvent(target, eventName) {
-        return new Promise(function (resolve, reject) {
-            var eventListener = function (event) {
-                target.removeEventListener(eventName, eventListener);
-                resolve(event);
-            };
-            target.addEventListener(eventName, eventListener);
-        });
-    }
-    EventTargetExtensions.waitEvent = waitEvent;
-
-    function subscribeEvent(target, eventName, listener) {
-        var oncessation;
-        var subscription = {
-            cease: function () {
-                target.removeEventListener(eventName, eventListener);
-                oncessation();
-            },
-            cessation: new Promise(function (resolve, reject) {
-                oncessation = function () {
-                    resolve(undefined);
-                };
-            })
-        };
-
-        var eventListener = function (event) {
-            listener.call(target, event, subscription);
-        };
-        target.addEventListener(eventName, eventListener);
-        return subscription;
-    }
-    EventTargetExtensions.subscribeEvent = subscribeEvent;
-})(EventTargetExtensions || (EventTargetExtensions = {}));
-
-var VideoElementExtensions;
+﻿var VideoElementExtensions;
 (function (VideoElementExtensions) {
     function waitMetadata(video) {
         if (video.duration)

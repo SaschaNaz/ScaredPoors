@@ -10,3 +10,6 @@
 [submodule "submodules/mjpegdecoder"]
 	path = submodules/mjpegdecoder
 	url = https://github.com/SaschaNaz/MJPEGDecoder.git
+[submodule "submodules/eventpromise"]
+	path = submodules/eventpromise
+	url = https://github.com/SaschaNaz/EventPromise.git
