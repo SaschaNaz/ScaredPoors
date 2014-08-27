@@ -4,12 +4,12 @@
             videoInput.click();
         });
 
-        EventTargetExtensions.waitEvent(videoInput, "change").then(() => subscription.cease());
+        return EventTargetExtensions.waitEvent(videoInput, "change").then(subscription.cease);
     })
     .then(() => loadVideo(videoInput.files[0]))
-    .then(() => {
-
-    });
+    .then(() => VideoElementExtensions.waitMetadata(videoControl))
+    .then(waitDrag)
+    .then((area) => analyze(area));
 
 
 function loadVideo(file: Blob) {
@@ -38,4 +38,42 @@ function loadVideo(file: Blob) {
     }
 
     videoControl.src = URL.createObjectURL(file);
+}
+
+function waitDrag() {
+    openOptions.style.display = areaText.style.display = "";
+    videoSlider.max = videoControl.duration.toString();
+    phaseText.innerHTML =
+    "Drag the screen to specify the analysis target area.\
+        Then, click the bottom bar to proceed.\
+        Open the options pages to adjust parameters.".replace(/\s\s+/g, "<br />");
+
+    var dragPresenter = new DragPresenter(panel, videoPresenter, "targetArea");
+    var scaleToOriginal = (area: Area) => {
+        var scaleX = videoControl.videoWidth / videoPresenter.clientWidth;
+        var scaleY = videoControl.videoHeight / videoPresenter.clientHeight;
+        return {
+            x: Math.round(area.x * scaleX),
+            y: Math.round(area.y * scaleY),
+            width: Math.round(area.width * scaleX),
+            height: Math.round(area.height * scaleY)
+        };
+    };
+
+    dragPresenter.ondragsizechanged = (area) => {
+        area = scaleToOriginal(area);
+        areaXText.textContent = area.x.toFixed();
+        areaYText.textContent = area.y.toFixed();
+        areaWidthText.textContent = area.width.toFixed();
+        areaHeightText.textContent = area.height.toFixed();
+    };
+
+    return EventTargetExtensions.subscribeEvent(statusPresenter, "click", (ev, subscription) => {
+        if (dragPresenter.isDragged) {
+            phaseText.style.display = openOptions.style.display = areaText.style.display = "none";
+            analysisText.style.display = "";
+            dragPresenter.close();
+            subscription.cease();
+        }
+    }).cessation.then(() => scaleToOriginal(dragPresenter.getTargetArea()))
 }

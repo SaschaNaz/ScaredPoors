@@ -18,13 +18,14 @@
     <script src="freezingmanager.js"></script>
     <script src="dragmanager.js"></script>
     <script src="app.js"></script>
+    <script src="uiflow.js"></script>
 </head>
 <body style="display: -ms-grid; -ms-grid-rows: 1fr 28px; -ms-grid-columns: 1fr;">
-    <input id="videoInput" type="file" onchange="loadVideo(event.target.files[0])" style="display: none;" />
+    <input id="videoInput" type="file" style="display: none;" />
     <div id="presenter">
         <video id="videoNativeElement" style="display: none;"></video>
     </div>
-    <div id="panel" onclick="videoInput.click()">
+    <div id="panel">
         <h1>Scareds</h1>
         <span id="openOptions" class="textButton" style="display: none;" onclick="options.style.display = ''; requestAnimationFrame(function () { options.style.opacity = 0.8; })">Options</span>
         <p id="phaseText">
