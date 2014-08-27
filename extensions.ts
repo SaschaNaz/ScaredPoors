@@ -8,6 +8,32 @@
             target.addEventListener(eventName, eventListener);
         });
     }
+
+    export function subscribeEvent<T extends Event>(target: EventTarget, eventName: string, listener: (ev: T, subscription: EventSubscription) => any) {
+        var oncessation: () => any;
+        var subscription: EventSubscription = {
+            cease() {
+                target.removeEventListener(eventName, eventListener);
+                oncessation();
+            },
+            cessation: new Promise<void>((resolve, reject) => {
+                oncessation = () => {
+                    resolve(undefined);
+                };
+            })
+        };
+
+        var eventListener = (event: T) => {
+            listener.call(target, event, subscription);
+        };
+        target.addEventListener(eventName, eventListener);
+        return subscription;
+    }
+
+    export interface EventSubscription {
+        cease(): void;
+        cessation: Promise<void>
+    }
 }
 
 module VideoElementExtensions {
@@ -24,11 +50,11 @@ module VideoElementExtensions {
     }
     export function seek(video: VideoPlayable, time: number) {
         return new Promise<void>((resolve, reject) => {
-            videoControl.onseeked = () => {
-                videoControl.onseeked = null;
+            video.onseeked = () => {
+                video.onseeked = null;
                 resolve(undefined);
             };
-            videoControl.currentTime = time;
+            video.currentTime = time;
         });
     }
 }

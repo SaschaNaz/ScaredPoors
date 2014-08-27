@@ -10,6 +10,28 @@
         });
     }
     EventTargetExtensions.waitEvent = waitEvent;
+
+    function subscribeEvent(target, eventName, listener) {
+        var oncessation;
+        var subscription = {
+            cease: function () {
+                target.removeEventListener(eventName, eventListener);
+                oncessation();
+            },
+            cessation: new Promise(function (resolve, reject) {
+                oncessation = function () {
+                    resolve(undefined);
+                };
+            })
+        };
+
+        var eventListener = function (event) {
+            listener.call(target, event, subscription);
+        };
+        target.addEventListener(eventName, eventListener);
+        return subscription;
+    }
+    EventTargetExtensions.subscribeEvent = subscribeEvent;
 })(EventTargetExtensions || (EventTargetExtensions = {}));
 
 var VideoElementExtensions;
@@ -28,11 +50,11 @@ var VideoElementExtensions;
     VideoElementExtensions.waitMetadata = waitMetadata;
     function seek(video, time) {
         return new Promise(function (resolve, reject) {
-            videoControl.onseeked = function () {
-                videoControl.onseeked = null;
+            video.onseeked = function () {
+                video.onseeked = null;
                 resolve(undefined);
             };
-            videoControl.currentTime = time;
+            video.currentTime = time;
         });
     }
     VideoElementExtensions.seek = seek;

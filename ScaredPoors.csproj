@@ -35,6 +35,7 @@
     <TypeScriptCompile Include="submodules\mjpegdecoder\mjpegdecoder.d.ts" />
     <TypeScriptCompile Include="submodules\streams\streams.d.ts" />
     <TypeScriptCompile Include="extensions.ts" />
+    <TypeScriptCompile Include="uiflow.ts" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="submodules\streams\streams.js.map" />
