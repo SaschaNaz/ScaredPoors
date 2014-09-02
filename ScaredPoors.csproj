@@ -24,10 +24,11 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="app.ts" />
-    <TypeScriptCompile Include="dragmanager.ts" />
+    <TypeScriptCompile Include="dragpresenter.ts" />
     <TypeScriptCompile Include="freezingmanager.ts" />
     <TypeScriptCompile Include="html.d.ts" />
     <TypeScriptCompile Include="objectdetector.ts" />
+    <TypeScriptCompile Include="pointpresenter.ts" />
     <TypeScriptCompile Include="scaredpoors.ts" />
     <TypeScriptCompile Include="imagediffworker.ts" />
     <TypeScriptCompile Include="scareds.ts" />
