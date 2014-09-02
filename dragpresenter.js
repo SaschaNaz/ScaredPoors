@@ -12,8 +12,8 @@
         this._widthPercentage = 0;
         this._heightPercentage = 0;
         this._onpointerdown = function (e) {
-            var eX = _this.forceInRange(e.offsetX, _this.targetElement.offsetLeft, _this.targetElement.clientWidth);
-            var eY = _this.forceInRange(e.offsetY, _this.targetElement.offsetTop, _this.targetElement.clientHeight);
+            var eX = _this._forceInRange(e.offsetX, _this.targetElement.offsetLeft, _this.targetElement.clientWidth);
+            var eY = _this._forceInRange(e.offsetY, _this.targetElement.offsetTop, _this.targetElement.clientHeight);
             if (e.offsetX != eX || e.offsetY != eY)
                 return;
 
@@ -35,8 +35,8 @@
                 _this.ondragsizechanged({ x: 0, y: 0, width: 0, height: 0 });
         };
         this._onpointermove = function (e) {
-            var eX = _this.forceInRange(e.offsetX, _this.targetElement.offsetLeft, _this.targetElement.clientWidth);
-            var eY = _this.forceInRange(e.offsetY, _this.targetElement.offsetTop, _this.targetElement.clientHeight);
+            var eX = _this._forceInRange(e.offsetX, _this.targetElement.offsetLeft, _this.targetElement.clientWidth);
+            var eY = _this._forceInRange(e.offsetY, _this.targetElement.offsetTop, _this.targetElement.clientHeight);
             _this._width = eX - _this._offsetX - _this.targetElement.offsetLeft;
             _this._height = eY - _this._offsetY - _this.targetElement.offsetTop;
 
@@ -109,7 +109,7 @@
         configurable: true
     });
 
-    DragPresenter.prototype.forceInRange = function (value, min, rangeLength) {
+    DragPresenter.prototype._forceInRange = function (value, min, rangeLength) {
         return Math.min(Math.max(value, min), min + rangeLength);
     };
 

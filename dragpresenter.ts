@@ -54,8 +54,8 @@
     }
 
     private _onpointerdown = (e: PointerEvent) => {
-        var eX = this.forceInRange(e.offsetX, this.targetElement.offsetLeft, this.targetElement.clientWidth);
-        var eY = this.forceInRange(e.offsetY, this.targetElement.offsetTop, this.targetElement.clientHeight);
+        var eX = this._forceInRange(e.offsetX, this.targetElement.offsetLeft, this.targetElement.clientWidth);
+        var eY = this._forceInRange(e.offsetY, this.targetElement.offsetTop, this.targetElement.clientHeight);
         if (e.offsetX != eX || e.offsetY != eY)
             return;
 
@@ -78,8 +78,8 @@
     };
 
     private _onpointermove = (e: PointerEvent) => {
-        var eX = this.forceInRange(e.offsetX, this.targetElement.offsetLeft, this.targetElement.clientWidth);
-        var eY = this.forceInRange(e.offsetY, this.targetElement.offsetTop, this.targetElement.clientHeight);
+        var eX = this._forceInRange(e.offsetX, this.targetElement.offsetLeft, this.targetElement.clientWidth);
+        var eY = this._forceInRange(e.offsetY, this.targetElement.offsetTop, this.targetElement.clientHeight);
         this._width = eX - this._offsetX - this.targetElement.offsetLeft;
         this._height = eY - this._offsetY - this.targetElement.offsetTop;
 
@@ -88,7 +88,7 @@
             this.ondragsizechanged(this.getTargetArea());
     };
 
-    private forceInRange(value: number, min: number, rangeLength: number) {
+    private _forceInRange(value: number, min: number, rangeLength: number) {
         return Math.min(Math.max(value, min), min + rangeLength);
     }
 
