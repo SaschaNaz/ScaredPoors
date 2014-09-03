@@ -32,6 +32,7 @@
     <TypeScriptCompile Include="scaredpoors.ts" />
     <TypeScriptCompile Include="imagediffworker.ts" />
     <TypeScriptCompile Include="scareds.ts" />
+    <TypeScriptCompile Include="sizerelativity.ts" />
     <TypeScriptCompile Include="submodules\es6-promises.d.ts" />
     <TypeScriptCompile Include="submodules\eventpromise\eventpromise.d.ts" />
     <TypeScriptCompile Include="submodules\mjpegdecoder\mjpegdecoder.d.ts" />
