@@ -8,7 +8,7 @@
     return loadVideo(videoInput.files[0]);
 }).then(function () {
     return VideoElementExtensions.waitMetadata(videoControl);
-}).then(waitDrag).then(function (area) {
+}).then(waitCalibration).then(waitDrag).then(function (area) {
     return analyze(area);
 });
 
@@ -37,6 +37,10 @@ function loadVideo(file) {
     }
 
     videoControl.src = URL.createObjectURL(file);
+}
+
+function waitCalibration() {
+    // TODO: create PointPresenter and calibrate sizes
 }
 
 function waitDrag() {
