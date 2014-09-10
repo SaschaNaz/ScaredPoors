@@ -4,6 +4,7 @@
         this.panel = panel;
         this.targetElement = targetElement;
         this._svgns = "http://www.w3.org/2000/svg";
+        this.areaPresenter = document.createElementNS(this._svgns, "svg");
         this._svgPoints = ArrayExtensions.from({ length: 2 }, function () {
             return _this._createShape();
         });
@@ -11,23 +12,32 @@
         this._pointRelativities = ArrayExtensions.from({ length: 2 }, function () {
             return ({ x: 0, y: 0 });
         });
-        var areaPresenter = this.areaPresenter = document.createElementNS(this._svgns, "svg");
-        targetElement.parentElement.appendChild(areaPresenter);
+        this._pointerup = function (e) {
+            var svgPoint = _this._svgPoints.shift();
+            var pointRelativity = _this._pointRelativities.shift();
+            var eX = _this._forceInRange(e.offsetX, _this.targetElement.offsetLeft, _this.targetElement.clientWidth);
+            var eY = _this._forceInRange(e.offsetY, _this.targetElement.offsetTop, _this.targetElement.clientHeight);
+            if (e.offsetX != eX || e.offsetY != eY)
+                return;
+
+            pointRelativity.x = _this._sizeRelativity.getRelativeX(eX - _this.targetElement.offsetLeft);
+            pointRelativity.y = _this._sizeRelativity.getRelativeY(eY - _this.targetElement.offsetTop);
+            svgPoint.cx.baseVal.value = eX;
+            svgPoint.cy.baseVal.value = eY;
+
+            // TODO: update pointrelativity and present circles
+            svgPoint.style.display = '';
+            _this._svgPoints.push(svgPoint);
+            _this._pointRelativities.push(pointRelativity);
+        };
+        this._onresize = function (e) {
+            _this._draw();
+        };
+        this._sizeRelativity = new SizeRelativity(targetElement);
+        targetElement.parentElement.appendChild(this.areaPresenter);
         this._eventSubscriptions["pointerup"] = EventPromise.subscribeEvent(panel, "pointerup", this._pointerup);
+        this._eventSubscriptions["resize"] = EventPromise.subscribeEvent(window, "resize", this._onresize);
     }
-    PointPresenter.prototype._pointerup = function (e) {
-        var svgPoint = this._svgPoints.shift();
-        var pointRelativity = this._pointRelativities.shift();
-        var eX = this._forceInRange(e.offsetX, this.targetElement.offsetLeft, this.targetElement.clientWidth);
-        var eY = this._forceInRange(e.offsetY, this.targetElement.offsetTop, this.targetElement.clientHeight);
-        if (e.offsetX != eX || e.offsetY != eY)
-            return;
-
-        svgPoint.style.display = '';
-        this._svgPoints.push(svgPoint);
-        this._pointRelativities.push(pointRelativity);
-    };
-
     PointPresenter.prototype._forceInRange = function (value, min, rangeLength) {
         return Math.min(Math.max(value, min), min + rangeLength);
     };
@@ -40,16 +50,31 @@
         shape.style.display = "hidden";
         return shape;
     };
-    PointPresenter.prototype.getPoints = function () {
+    PointPresenter.prototype.getTargetPoints = function () {
         var points;
-        for (var i in this._pointRelativities) {
-            var point = this._svgPoints[i];
+        for (var i in this._pointRelativities)
             points[i] = {
                 x: this._sizeRelativity.getAbsoluteX(this._pointRelativities[i].x),
                 y: this._sizeRelativity.getAbsoluteY(this._pointRelativities[i].y)
             };
-        }
         return points;
+    };
+    PointPresenter.prototype._getPanelPoints = function () {
+        var _this = this;
+        var points = this.getTargetPoints();
+        points.forEach(function (point) {
+            point.x += _this.targetElement.offsetLeft;
+            point.y += _this.targetElement.offsetTop;
+        });
+        return points;
+    };
+
+    PointPresenter.prototype._draw = function () {
+        var points = this._getPanelPoints();
+        this._svgPoints.forEach(function (svgPoint, i) {
+            svgPoint.cx.baseVal.value = points[i].x;
+            svgPoint.cy.baseVal.value = points[i].y;
+        });
     };
 
     PointPresenter.prototype.close = function () {

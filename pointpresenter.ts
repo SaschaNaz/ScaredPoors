@@ -5,20 +5,21 @@
 
 class PointPresenter {
     private _svgns = "http://www.w3.org/2000/svg";
-    areaPresenter: SVGSVGElement;
-    private _svgPoints = ArrayExtensions.from<SVGCircleElement>({ length: 2 }, () => this._createShape());
+    areaPresenter = <SVGSVGElement>document.createElementNS(this._svgns, "svg");
+    private _svgPoints = ArrayExtensions.from({ length: 2 }, () => this._createShape());
     private _eventSubscriptions: { [name: string]: EventPromise.EventSubscription } = {};
 
-    private _pointRelativities = ArrayExtensions.from<Point>({ length: 2 }, () => ({ x: 0, y: 0 }));
+    private _pointRelativities = ArrayExtensions.from({ length: 2 }, () => <Point>({ x: 0, y: 0 }));
     private _sizeRelativity: SizeRelativity;
 
     constructor(public panel: HTMLElement, public targetElement: HTMLElement) {
-        var areaPresenter = this.areaPresenter = <SVGSVGElement>document.createElementNS(this._svgns, "svg");
-        targetElement.parentElement.appendChild(areaPresenter);
+        this._sizeRelativity = new SizeRelativity(targetElement);
+        targetElement.parentElement.appendChild(this.areaPresenter);
         this._eventSubscriptions["pointerup"] = EventPromise.subscribeEvent(panel, "pointerup", this._pointerup);
+        this._eventSubscriptions["resize"] = EventPromise.subscribeEvent(window, "resize", this._onresize);
     }
 
-    private _pointerup(e: PointerEvent) {
+    private _pointerup = (e: PointerEvent) => {
         var svgPoint = this._svgPoints.shift();
         var pointRelativity = this._pointRelativities.shift();
         var eX = this._forceInRange(e.offsetX, this.targetElement.offsetLeft, this.targetElement.clientWidth);
@@ -26,7 +27,11 @@ class PointPresenter {
         if (e.offsetX != eX || e.offsetY != eY)
             return;
 
-        
+        pointRelativity.x = this._sizeRelativity.getRelativeX(eX - this.targetElement.offsetLeft);
+        pointRelativity.y = this._sizeRelativity.getRelativeY(eY - this.targetElement.offsetTop);
+        svgPoint.cx.baseVal.value = eX;
+        svgPoint.cy.baseVal.value = eY;
+        // TODO: update pointrelativity and present circles
 
         svgPoint.style.display = '';
         this._svgPoints.push(svgPoint);
@@ -45,16 +50,34 @@ class PointPresenter {
         shape.style.display = "hidden";
         return shape;
     }
-    getPoints() {
+    getTargetPoints() {
         var points: Point[];
-        for (var i in this._pointRelativities) {
-            var point = this._svgPoints[i];
+        for (var i in this._pointRelativities)
             points[i] = {
                 x: this._sizeRelativity.getAbsoluteX(this._pointRelativities[i].x),
                 y: this._sizeRelativity.getAbsoluteY(this._pointRelativities[i].y)
             }
-        }
         return points;
+    }
+    private _getPanelPoints() {
+        var points = this.getTargetPoints();
+        points.forEach((point) => {
+            point.x += this.targetElement.offsetLeft;
+            point.y += this.targetElement.offsetTop;
+        });
+        return points;
+    }
+
+    private _onresize = (e: UIEvent) => {
+        this._draw();
+    }
+
+    private _draw() {
+        var points = this._getPanelPoints();
+        this._svgPoints.forEach((svgPoint, i) => {
+            svgPoint.cx.baseVal.value = points[i].x;
+            svgPoint.cy.baseVal.value = points[i].y;
+        });
     }
 
     close() {
