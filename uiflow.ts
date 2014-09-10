@@ -68,7 +68,7 @@ function waitDrag() {
         areaHeightText.textContent = area.height.toFixed();
     };
 
-    return EventTargetExtensions.subscribeEvent(statusPresenter, "click", (ev, subscription) => {
+    return EventPromise.subscribeEvent(statusPresenter, "click", (ev, subscription) => {
         if (dragPresenter.isDragged) {
             phaseText.style.display = openOptions.style.display = areaText.style.display = "none";
             analysisText.style.display = "";

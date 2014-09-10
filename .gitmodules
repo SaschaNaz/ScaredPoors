@@ -13,3 +13,6 @@
 [submodule "submodules/eventpromise"]
 	path = submodules/eventpromise
 	url = https://github.com/SaschaNaz/EventPromise.git
+[submodule "submodules/arrayextensions"]
+	path = submodules/arrayextensions
+	url = https://github.com/SaschaNaz/ArrayExtensions.git

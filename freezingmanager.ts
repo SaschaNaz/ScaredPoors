@@ -150,11 +150,3 @@
 interface Array<T> {
     reduce<U>(callbackfn: (previous: U, current: T, currentIndex: number, array: T[]) => U, initialValue: U): U;
 }
-interface Array<T> {
-    fill(value: T, start?: number, end?: number): void;
-}
-if (!Array.prototype.fill)
-    Array.prototype.fill = function (value: any, start = 0, end = this.length) {
-        for (var i = 0; i < this.length; i++)
-            this[i] = value;
-    }

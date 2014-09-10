@@ -1,11 +1,16 @@
 ﻿var PointPresenter = (function () {
     function PointPresenter(panel, targetElement) {
+        var _this = this;
         this.panel = panel;
         this.targetElement = targetElement;
         this._svgns = "http://www.w3.org/2000/svg";
-        this._svgPoints = [this._createShape(), this._createShape()];
+        this._svgPoints = ArrayExtensions.from({ length: 2 }, function () {
+            return _this._createShape();
+        });
         this._eventSubscriptions = {};
-        this._pointRelativities = [{ x: 0, y: 0 }, { x: 0, y: 0 }];
+        this._pointRelativities = ArrayExtensions.from({ length: 2 }, function () {
+            return ({ x: 0, y: 0 });
+        });
         var areaPresenter = this.areaPresenter = document.createElementNS(this._svgns, "svg");
         targetElement.parentElement.appendChild(areaPresenter);
         this._eventSubscriptions["pointerup"] = EventPromise.subscribeEvent(panel, "pointerup", this._pointerup);

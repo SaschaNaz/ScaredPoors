@@ -19,8 +19,6 @@
   <ItemGroup>
     <Content Include="app.css" />
     <Content Include="default.htm" />
-    <Content Include="submodules\promise\Promise.js" />
-    <Content Include="submodules\streams\streams.js" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="app.ts" />
@@ -33,15 +31,14 @@
     <TypeScriptCompile Include="imagediffworker.ts" />
     <TypeScriptCompile Include="scareds.ts" />
     <TypeScriptCompile Include="sizerelativity.ts" />
+    <TypeScriptCompile Include="submodules\arrayextensions\fill\fill.d.ts" />
+    <TypeScriptCompile Include="submodules\arrayextensions\from\from.d.ts" />
     <TypeScriptCompile Include="submodules\es6-promises.d.ts" />
     <TypeScriptCompile Include="submodules\eventpromise\eventpromise.d.ts" />
     <TypeScriptCompile Include="submodules\mjpegdecoder\mjpegdecoder.d.ts" />
     <TypeScriptCompile Include="submodules\streams\streams.d.ts" />
     <TypeScriptCompile Include="extensions.ts" />
     <TypeScriptCompile Include="uiflow.ts" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="submodules\streams\streams.js.map" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="web.config" />

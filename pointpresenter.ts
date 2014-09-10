@@ -6,10 +6,10 @@
 class PointPresenter {
     private _svgns = "http://www.w3.org/2000/svg";
     areaPresenter: SVGSVGElement;
-    private _svgPoints = [this._createShape(), this._createShape() ];
+    private _svgPoints = ArrayExtensions.from<SVGCircleElement>({ length: 2 }, () => this._createShape());
     private _eventSubscriptions: { [name: string]: EventPromise.EventSubscription } = {};
 
-    private _pointRelativities: Point[] = [{ x: 0, y: 0 }, { x: 0, y: 0 }];
+    private _pointRelativities = ArrayExtensions.from<Point>({ length: 2 }, () => ({ x: 0, y: 0 }));
     private _sizeRelativity: SizeRelativity;
 
     constructor(public panel: HTMLElement, public targetElement: HTMLElement) {

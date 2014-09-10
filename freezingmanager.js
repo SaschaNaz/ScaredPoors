@@ -169,12 +169,4 @@
     };
     return FreezingManager;
 })();
-
-if (!Array.prototype.fill)
-    Array.prototype.fill = function (value, start, end) {
-        if (typeof start === "undefined") { start = 0; }
-        if (typeof end === "undefined") { end = this.length; }
-        for (var i = 0; i < this.length; i++)
-            this[i] = value;
-    };
 //# sourceMappingURL=freezingmanager.js.map
