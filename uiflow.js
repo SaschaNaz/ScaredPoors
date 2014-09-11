@@ -8,8 +8,14 @@
     return loadVideo(videoInput.files[0]);
 }).then(function () {
     return VideoElementExtensions.waitMetadata(videoControl);
-}).then(waitCalibration).then(waitDrag).then(function (area) {
-    return analyze(area);
+}).then(function () {
+    var calibration;
+    return waitCalibration().then(function (_calibration) {
+        calibration = _calibration;
+        return waitDrag();
+    }).then(function (area) {
+        return analyze(area, calibration);
+    });
 });
 
 function loadVideo(file) {
@@ -40,12 +46,41 @@ function loadVideo(file) {
 }
 
 function waitCalibration() {
-    // TODO: create PointPresenter and calibrate sizes
+    openOptions.style.display = areaText.style.display = "";
+    videoSlider.max = videoControl.duration.toString();
+    phaseText.innerHTML = "Drag the screen to specify the analysis target area.\
+        Then, click the bottom bar to proceed.\
+        Open the options pages to adjust parameters.".replace(/\s\s+/g, "<br />");
+
+    var pointPresenter = new PointPresenter(panel, videoPresenter);
+    var scaleToOriginal = function (points) {
+        var results = [];
+
+        var scaleX = videoControl.videoWidth / videoPresenter.clientWidth;
+        var scaleY = videoControl.videoHeight / videoPresenter.clientHeight;
+        points.forEach(function (point) {
+            results.push({
+                x: Math.round(point.x * scaleX),
+                y: Math.round(point.y * scaleY)
+            });
+        });
+        return points;
+    };
+
+    return EventPromise.subscribeEvent(statusPresenter, "click", function (ev, subscription) {
+        if (pointPresenter.isFullyPointed) {
+            pointPresenter.close();
+            subscription.cease();
+        }
+    }).cessation.then(function () {
+        var scaled = scaleToOriginal(pointPresenter.getTargetPoints());
+
+        // distance
+        return Math.sqrt(Math.pow(scaled[0].x - scaled[1].x, 2) + Math.pow(scaled[0].y - scaled[1].y, 2));
+    });
 }
 
 function waitDrag() {
-    openOptions.style.display = areaText.style.display = "";
-    videoSlider.max = videoControl.duration.toString();
     phaseText.innerHTML = "Drag the screen to specify the analysis target area.\
         Then, click the bottom bar to proceed.\
         Open the options pages to adjust parameters.".replace(/\s\s+/g, "<br />");

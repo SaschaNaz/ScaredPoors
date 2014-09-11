@@ -12,9 +12,16 @@ class PointPresenter {
     private _pointRelativities = ArrayExtensions.from({ length: 2 }, () => <Point>({ x: 0, y: 0 }));
     private _sizeRelativity: SizeRelativity;
 
+    get isFullyPointed() {
+        return this._svgPoints.every((circle) => !circle.style.display);
+    }
+
     constructor(public panel: HTMLElement, public targetElement: HTMLElement) {
         this._sizeRelativity = new SizeRelativity(targetElement);
         targetElement.parentElement.appendChild(this.areaPresenter);
+
+        this._svgPoints.forEach((circle) => this.areaPresenter.appendChild(circle));
+
         this._eventSubscriptions["pointerup"] = EventPromise.subscribeEvent(panel, "pointerup", this._pointerup);
         this._eventSubscriptions["resize"] = EventPromise.subscribeEvent(window, "resize", this._onresize);
     }
@@ -31,7 +38,6 @@ class PointPresenter {
         pointRelativity.y = this._sizeRelativity.getRelativeY(eY - this.targetElement.offsetTop);
         svgPoint.cx.baseVal.value = eX;
         svgPoint.cy.baseVal.value = eY;
-        // TODO: update pointrelativity and present circles
 
         svgPoint.style.display = '';
         this._svgPoints.push(svgPoint);
@@ -47,11 +53,11 @@ class PointPresenter {
         shape.r.baseVal.value = 10;
         shape.style.fill = "green";
         shape.style.opacity = "0.8";
-        shape.style.display = "hidden";
+        shape.style.display = "none";
         return shape;
     }
     getTargetPoints() {
-        var points: Point[];
+        var points: Point[] = [];
         for (var i in this._pointRelativities)
             points[i] = {
                 x: this._sizeRelativity.getAbsoluteX(this._pointRelativities[i].x),

@@ -12,7 +12,7 @@
         return rx * this.target.clientWidth;
     };
     SizeRelativity.prototype.getAbsoluteY = function (ry) {
-        return ry * this.target.clientWidth;
+        return ry * this.target.clientHeight;
     };
     return SizeRelativity;
 })();

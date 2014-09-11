@@ -12,6 +12,6 @@
         return rx * this.target.clientWidth;
     }
     getAbsoluteY(ry: number) {
-        return ry * this.target.clientWidth;
+        return ry * this.target.clientHeight;
     }
 }

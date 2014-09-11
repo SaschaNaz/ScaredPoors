@@ -24,7 +24,7 @@ if (!window.setImmediate) {
 
 var imageDiffWorker = new Worker("imagediffworker.js");
 
-var analyze = function (crop) {
+var analyze = function (crop, calibration) {
     //crop = {
     //    x: 139,
     //    y: 236,
@@ -34,7 +34,7 @@ var analyze = function (crop) {
     var manager = new FreezingManager();
 
     //var threshold = 100;
-    var threshold = Math.round(crop.width * crop.height * 1.2e-2);
+    var threshold = Math.round(calibration * 1.6);
 
     var sequence = getFrameImageData(0, videoControl.videoWidth, videoControl.videoHeight, crop).then(function (imageData) {
         lastImageFrame = { time: videoControl.currentTime, imageData: imageData };

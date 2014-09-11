@@ -25,7 +25,6 @@
             svgPoint.cx.baseVal.value = eX;
             svgPoint.cy.baseVal.value = eY;
 
-            // TODO: update pointrelativity and present circles
             svgPoint.style.display = '';
             _this._svgPoints.push(svgPoint);
             _this._pointRelativities.push(pointRelativity);
@@ -35,9 +34,24 @@
         };
         this._sizeRelativity = new SizeRelativity(targetElement);
         targetElement.parentElement.appendChild(this.areaPresenter);
+
+        this._svgPoints.forEach(function (circle) {
+            return _this.areaPresenter.appendChild(circle);
+        });
+
         this._eventSubscriptions["pointerup"] = EventPromise.subscribeEvent(panel, "pointerup", this._pointerup);
         this._eventSubscriptions["resize"] = EventPromise.subscribeEvent(window, "resize", this._onresize);
     }
+    Object.defineProperty(PointPresenter.prototype, "isFullyPointed", {
+        get: function () {
+            return this._svgPoints.every(function (circle) {
+                return !circle.style.display;
+            });
+        },
+        enumerable: true,
+        configurable: true
+    });
+
     PointPresenter.prototype._forceInRange = function (value, min, rangeLength) {
         return Math.min(Math.max(value, min), min + rangeLength);
     };
@@ -47,11 +61,11 @@
         shape.r.baseVal.value = 10;
         shape.style.fill = "green";
         shape.style.opacity = "0.8";
-        shape.style.display = "hidden";
+        shape.style.display = "none";
         return shape;
     };
     PointPresenter.prototype.getTargetPoints = function () {
-        var points;
+        var points = [];
         for (var i in this._pointRelativities)
             points[i] = {
                 x: this._sizeRelativity.getAbsoluteX(this._pointRelativities[i].x),
