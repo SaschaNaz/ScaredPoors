@@ -6,6 +6,8 @@ Change the text below the title as phase changes
 3. Set the threshold value from user-measured reference length and subject volume
 */
 
+declare function saveAs(data: Blob, filename: string): void;
+
 var videoPresenter: HTMLElement = null;
 var videoControl: VideoPlayable = null;
 

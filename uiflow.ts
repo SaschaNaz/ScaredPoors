@@ -16,6 +16,10 @@
                 return waitDrag();
             })
             .then((area) => analyze(area, calibration));
+    }).then((timeline) => {
+        saveAs(new Blob(
+            [timeline.map((single) => 'start: ' + single.start.toFixed(3) + 'end: ' + single.end.toFixed(3)).join('\r\n')]
+            , { type: 'text/plain' }), 'freezingTimeline.scareds.txt');
     });
 
 

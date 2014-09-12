@@ -16,3 +16,6 @@
 [submodule "submodules/arrayextensions"]
 	path = submodules/arrayextensions
 	url = https://github.com/SaschaNaz/ArrayExtensions.git
+[submodule "submodules/filesaver"]
+	path = submodules/filesaver
+	url = https://github.com/eligrey/FileSaver.js.git
